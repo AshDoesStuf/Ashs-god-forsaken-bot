@@ -41,7 +41,6 @@ function loadModules(bot) {
 
   bot.loadPlugins(modules);
 }
-
 let hitCounter = 0;
 let tempCount = 0;
 bot.bloodhound.yaw_correlation_enabled = true;
@@ -185,6 +184,8 @@ bot.once("spawn", async () => {
     Offenders: ${getKnownOffenders()}
     Current target: ${bot.fightBot?.target ? bot.fightBot?.target : "no one"}
     Offhand prio: ${bot.fightBot.offHandPriority}
+    Moving: ${bot.fightBot.isMoving()}
+    Uppercutting: ${bot.fightBot.upperCutting}
     `)
     );
   }, 10);
@@ -227,7 +228,7 @@ bot.once("spawn", async () => {
     bot.fightBot.followTarget();
     bot.fightBot.followMob();
     bot.fightBot.block();
-    bot.fightBot.setPriority()
+    bot.fightBot.setPriority();
     await bot.fightBot.releve();
     if (bot.heldItem) {
       bot.fightBot.debounce = bot.fightBot.changeDebounce(bot?.heldItem);

@@ -59,6 +59,7 @@ class Fight {
     this.pve = false;
     this.safety = false;
     this.blocking = false;
+    this.upperCutting = false;
 
     this.followDistance = 10;
     this.attackDistnace = 3;
@@ -77,45 +78,17 @@ class Fight {
    * Look at the specified target
    */
   async lookPlayer() {
-    if (this.target === null) return this.bot.chat("no target bitch");
-
     const look = async () => {
-      const p = this.bot.players[this.target]?.entity;
-      return new Promise(async (r) => {
-        if (
-          p &&
-          !this.placing &&
-          this.IsCombat &&
-          !this.eating &&
-          !this.isShooting
-        ) {
-          let directionX = p.position.x - this.bot.entity.position.x;
-          let directionY = p.position.y - this.bot.entity.position.y;
-          let directionZ = p.position.z - this.bot.entity.position.z;
-          let distance = Math.sqrt(
-            directionX * directionX +
-              directionY * directionY +
-              directionZ * directionZ
-          );
-
-          let ratio = 89 / distance;
-          let newPosition = {
-            x: this.bot.entity.position.x + directionX * ratio,
-            y: this.bot.entity.position.y + directionY * ratio,
-            z: this.bot.entity.position.z + directionZ * ratio,
-          };
-
-          await this.bot.lookAt(
-            new Vec3(newPosition.x, newPosition.y, newPosition.z).offset(
-              0,
-              1.6,
-              0
-            ),
-            true
-          );
-          r();
-        }
-      });
+      const player = this.bot.players[this.target]?.entity;
+      if (
+        player &&
+        this.IsCombat &&
+        !this.placing &&
+        !this.eating &&
+        !this.isShooting
+      ) {
+        await this.bot.lookAt(player.position.offset(0, 1.6, 0), true);
+      }
     };
 
     this.lookInter = setInterval(look);
@@ -156,21 +129,28 @@ class Fight {
   /**
    * Sets the bots control-states depending on the situation
    */
-  followTarget() {
+  async followTarget() {
     if (!this.target_G) return;
+
     const distance = this.bot.entity.position.distanceTo(
       this.target_G.position
     );
-
     if (this.target && this.IsCombat && !this.placing && !this.isPearling) {
-      this.bot.setControlState("forward", true);
-      this.bot.setControlState("sprint", true);
-      this.isSprinting = true;
-      if (distance <= 2.1) {
+      if (distance > 2) {
+        this.bot.setControlState("forward", true);
+        this.bot.setControlState("sprint", true);
+        this.isSprinting = true;
+      } else {
         this.bot.setControlState("forward", false);
         this.bot.setControlState("sprint", false);
-        this.bot.setControlState("jump", false);
+        this.bot.setControlState("back", true);
+        setTimeout(() => {
+          this.bot.setControlState("back", false);
+        }, 300);
         this.isSprinting = false;
+        if (!this.upperCutting) {
+          this.bot.setControlState("jump", false);
+        }
       }
     }
   }
@@ -248,7 +228,12 @@ class Fight {
           //Inner sword combat
           if (between(distance, 0, this.attackDistnace) && this.IsCombat) {
             this.closeToTarg = true;
-            // Default mode
+            let shouldPlace = false;
+
+            if (this.settings.aggressive) {
+              shouldPlace = Math.random() < 0.4;
+            }
+            // Normal mdoe
             if (
               (!this.settings.aggressive && this.isLookingAtTarget()) ||
               (!this.settings.hacker && this.isLookingAtTarget()) ||
@@ -258,15 +243,13 @@ class Fight {
               this.tap();
               this.bot.setControlState("jump", false);
               this.bot.emit("hit");
-              await sleep(this.debounce);
             }
-            // FFA mode + Aggressive
+            // Agressive + FFA
             else if (this.settings.freeForAll && this.settings.aggressive) {
               if (!this.switchInter) {
                 this.switchInter = setInterval(dillyDally, 15 * 1000);
               }
 
-              const shouldPlace = Math.random() < 0.4;
               if (
                 shouldPlace &&
                 targetEntity.onGround &&
@@ -282,14 +265,12 @@ class Fight {
 
               this.stap();
               this.bot.attack(targetEntity);
+              this.uppercut();
               this.bot.setControlState("jump", false);
               this.bot.emit("hit");
-              await sleep(this.debounce);
             }
-
-            // For aggressive mode
+            // Aggressive
             else if (this.settings.aggressive) {
-              const shouldPlace = Math.random() < 0.4;
               if (
                 shouldPlace &&
                 targetEntity.onGround &&
@@ -301,34 +282,24 @@ class Fight {
                 await this.placeObstacle();
                 await sleep(100);
                 this.bot.setControlState("back", false);
-
-                this.uppercut();
-                this.stap();
-                this.bot.attack(targetEntity);
-                this.bot.setControlState("jump", false);
-                this.bot.emit("hit");
-                await sleep(this.debounce);
-              } else {
-                this.uppercut();
-                this.stap();
-                this.bot.attack(targetEntity);
-                this.bot.setControlState("jump", false);
-                this.bot.emit("hit");
-                await sleep(this.debounce);
               }
+              this.uppercut();
+              this.stap();
+              this.bot.attack(targetEntity);
+              this.bot.setControlState("jump", false);
+              this.bot.emit("hit");
             }
-            // Hacker mode
+            // HAcker
             else if (this.settings.hacker) {
               this.attackDistnace = 4;
               this.tap();
               this.bot.attack(targetEntity);
               this.bot.setControlState("jump", false);
               this.bot.emit("hit");
-              await sleep(this.debounce);
             }
+            await sleep(this.debounce);
           } else {
             this.closeToTarg = false;
-            return;
           }
         } //range combat
         else if (
@@ -545,31 +516,32 @@ class Fight {
   }
 
   async block() {
-    const offandSlot = this.bot.getEquipmentDestSlot("off-hand");
+    const offHandSlot = this.bot.getEquipmentDestSlot("off-hand");
     const slots = this.bot.inventory.slots;
-    const shield = this.bot.inventory.items().find((i) => i.name === "shield");
+    const shield = this.bot.inventory
+      .items()
+      .find((item) => item.name === "shield");
     const delay = 0.9;
 
-    if (slots[offandSlot] && slots[offandSlot].name === "shield") {
-      const chanceToBlock = Math.random() * 2 < 0.05134;
+    if (slots[offHandSlot] && slots[offHandSlot].name === "shield") {
       if (
-        chanceToBlock &&
         this.IsCombat &&
         this.closeToTarg &&
         !this.eating &&
         !this.isHungry &&
         !this.blocking
       ) {
-        this.blocking = true;
-        this.bot.activateItem(true);
-        await sleep(delay * 1000);
-        this.bot.deactivateItem();
-        this.blocking = false;
+        const chanceToBlock = Math.random() * 2 < 0.05134;
+        if (chanceToBlock) {
+          this.blocking = true;
+          this.bot.activateItem(true);
+          await sleep(delay * 1000);
+          this.bot.deactivateItem();
+          this.blocking = false;
+        }
       }
-    } else {
-      if (shield && this.offHandPriority === 3) {
-        await this.bot.equip(shield, "off-hand");
-      }
+    } else if (shield && this.offHandPriority === 3) {
+      await this.bot.equip(shield, "off-hand");
     }
   }
 
@@ -589,19 +561,19 @@ class Fight {
   }
 
   uppercut() {
-    if (this.closeToTarg) {
-      this.bot.setControlState("jump", true);
-      setTimeout(() => {
-        this.bot.setControlState("jump", false);
-      }, 600);
-    }
+    this.bot.setControlState("jump", true);
+    this.upperCutting = true;
+    setTimeout(() => {
+      this.bot.setControlState("jump", false);
+      this.upperCutting = false;
+    }, 600);
   }
 
   /**
    * S-tapping
    */
   stap() {
-    const delay = Math.floor(Math.random() * (200 - 160) + 160);
+    const delay = Math.floor(Math.random() * (200 - 180) + 180);
     if (this.closeToTarg) {
       this.bot.setControlState("sprint", false);
       this.bot.setControlState("back", true);
@@ -696,56 +668,42 @@ class Fight {
   }
 
   async readyUp() {
-    const inv = this.bot.inventory.items();
-    let res = null;
-    let speed = null;
     this.gettingReady = true;
     this.bot.chat("/clear");
     this.bot.chat("/kit claim FriskNeth");
     this.bot.chat("/give @s cobweb");
-    this.bot.chat("/give @s shield");
     await sleep(1000);
 
-    for (const item of inv) {
-      if (item.nbt?.value?.Potion) {
-        if (item.nbt?.value?.Potion?.value.includes("fire")) {
-          res = item;
-        }
-      }
+    const inv = this.bot.inventory.items();
+    const fireResistancePotion = inv.find((item) => {
+      return item.nbt?.value?.Potion?.value.includes("fire");
+    });
+    const swiftnessPotion = inv.find((item) => {
+      return item.nbt?.value?.Potion?.value.includes("swiftness");
+    });
+    if (!fireResistancePotion && !swiftnessPotion) {
+      this.gettingReady = false;
+      return;
     }
-
-    for (const item of inv) {
-      if (item.nbt?.value?.Potion) {
-        if (item.nbt?.value?.Potion?.value.includes("swiftness")) {
-          speed = item;
-        }
-      }
-    }
-    if (!res && !speed) return;
 
     const { position } = this.bot.entity;
-
     const throwPot = async (pot) => {
-      return new Promise(async (r) => {
-        try {
-          if (pot) {
-            await this.bot.lookAt(position, true);
-            await sleep(10);
-            await this.bot.equip(pot, "hand");
-            await sleep(340);
-            this.bot.activateItem();
-            await sleep(760);
-            r();
-          }
-        } catch {
-          r();
-          this.gettingReady = false;
-        }
-      });
+      if (!pot) return;
+
+      try {
+        await this.bot.lookAt(position, true);
+        await sleep(10);
+        await this.bot.equip(pot, "hand");
+        await sleep(340);
+        this.bot.activateItem();
+        await sleep(760);
+      } catch {
+        this.gettingReady = false;
+      }
     };
 
-    await throwPot(res);
-    await throwPot(speed);
+    await throwPot(fireResistancePotion);
+    await throwPot(swiftnessPotion);
     this.gettingReady = false;
   }
 
@@ -763,58 +721,43 @@ class Fight {
         }
       }
 
-      if (gap == undefined) return;
+      if (!gap) return;
 
-      if (gap && !this.eating && this.IsCombat) {
+      if (!this.eating && this.IsCombat) {
         try {
-          if (this.bot.heldItem.type === gap.type) {
-            this.eating = true;
-            if (this.bot.usingHeldItem) {
-              this.bot.deactivateItem();
-            }
+          this.eating = true;
+          const isEquipped = this.bot.heldItem.type === gap.type;
 
-            await this.bot.lookAt(
-              this.bot.entity.position.offset(
-                0,
-                0,
-                Math.floor(Math.random() * -90) - 5
-              ),
-              true
-            );
-            if (!this.isMoving()) {
-              this.bot.setControlState("forward", true);
-            }
-            this.bot.activateItem();
-            await sleep(1600);
-            this.bot.deactivateItem();
-            this.eating = false;
-          } else if (this.bot?.heldItem.type !== gap.type) {
-            this.eating = true;
+          if (!isEquipped) {
             await this.bot.equip(gap, "hand");
-            await this.bot.lookAt(
-              this.bot.entity.position.offset(
-                0,
-                0,
-                Math.floor(Math.random() * -90) - 5
-              ),
-              true
-            );
-            if (!this.isMoving()) {
-              this.bot.setControlState("forward", true);
-            }
-            this.bot.activateItem();
-            await sleep(1600);
-            this.bot.deactivateItem();
-            this.eating = false;
           }
+
+          await this.bot.lookAt(
+            this.bot.entity.position.offset(
+              0,
+              0,
+              Math.floor(Math.random() * -90) - 5
+            ),
+            true
+          );
+          if (!this.isMoving()) {
+            this.bot.setControlState("forward", true);
+          }
+          this.bot.activateItem();
+          await sleep(1600);
+          this.bot.deactivateItem();
+
+          if (!isEquipped) {
+            await this.bot.unequip("hand");
+          }
+          this.eating = false;
         } catch (err) {
           this.logError(err);
-          this.bot.chat("failed to eat gap!");
+          this.bot.chat("Failed to eat gap!");
           this.eating = false;
           await sleep(1000);
         }
       }
-      sleep(1000);
     };
     const autoEat = async () => {
       let items = this.bot.inventory.items(); //Get the bots items
@@ -843,7 +786,7 @@ class Fight {
         }
     };
 
-    if (this.bot.health <= 10) {
+    if (this.bot.health < 14 && !this.eating) {
       await eatGap();
     }
 
@@ -1101,10 +1044,8 @@ class Fight {
   }
 
   isMoving() {
-    if (this.bot.entity.velocity > 0) {
-      return true;
-    }
-    return false;
+    const velocity = this.bot.entity.velocity.toArray();
+    return velocity[0] > 0 || velocity[1] > 0 || velocity[2] > 0;
   }
 
   async totemEquip() {
@@ -1126,6 +1067,8 @@ class Fight {
   }
 
   async placeObstacle() {
+    if (!this.target_G || !this.target) return;
+
     const flint = this.bot.inventory
       .items()
       .find((i) => i.name.includes("flint_and_steel"));
@@ -1135,75 +1078,55 @@ class Fight {
     const web = this.bot.inventory
       .items()
       .find((i) => i.name.includes("cobweb"));
+    const items = [flint, lava, web].filter((item) => item !== undefined);
 
-    if (!flint & !lava && !web) return;
+    if (items.length === 0) return;
 
-    if (!this.target_G || !this.target) return;
     const near = this.bot.nearestEntity(
       (e) =>
         e.type === "player" &&
         e.position.distanceTo(this.bot.entity.position) <= 3 &&
-        e?.username === this.target_G.username
+        e.username === this.target_G.username
     );
-
     if (!near) return;
 
-    const place = async () => {
-      return new Promise(async (r) => {
-        if (!lava && !web && flint && !this.placing) {
-          const blockPos = near.position.offset(0, -1, 0);
-          const referenceBlock = this.bot.blockAt(blockPos);
-          // For flint and steel
-          this.placing = true;
-          await this.bot.equip(flint, "hand");
-          await this.bot.lookAt(blockPos, true);
-          try {
-            await this.bot.placeBlock(referenceBlock, new Vec3(0, 1, 0));
-            await sleep(300);
-            r();
-            this.placing = false;
-          } catch {
-            await sleep(300);
-            this.placing = false;
-          }
-        } else if (!flint && !web && lava && !this.placing) {
-          // For lava
-          this.placing = true;
-          await this.bot.equip(lava);
-          await sleep(100);
-          await this.bot.lookAt(near.position.offset(0, -1, 0), true);
-          await sleep(100);
-          this.bot.activateItem();
-          await sleep(100);
-          this.bot.activateItem();
-          await sleep(300);
-          r();
-          this.placing = false;
-        } else if (!lava && !flint && web && !this.placing) {
-          const blockPos = near.position.offset(0, -1, 0);
-          const referenceBlock = this.bot.blockAt(
-            near.position.offset(0, -1, 0)
-          );
-          // for cobwebs
-          this.placing = true;
-          await this.bot.equip(web, "hand");
-          await this.bot.lookAt(blockPos, true);
-          try {
-            await this.bot.placeBlock(referenceBlock, new Vec3(0, 1, 0));
-            r();
-            await sleep(300);
-            this.placing = false;
-          } catch {
-            this.placing = false;
-          }
-          await sleep(300);
-          r();
-          this.placing = false;
-        }
-      });
-    };
+    const randomItem = items[Math.floor(Math.random() * items.length)];
 
-    await place();
+    if (!this.placing) {
+      this.placing = true;
+      await this.bot.equip(randomItem, "hand");
+
+      if (randomItem.name.includes("flint_and_steel")) {
+        await this.bot.lookAt(near.position.offset(0, -1, 0), true);
+        try {
+          await this.bot.placeBlock(
+            this.bot.blockAt(near.position.offset(0, -1, 0)),
+            new Vec3(0, 1, 0)
+          );
+        } catch (err) {
+          console.error(err);
+        }
+        await sleep(300);
+      } else if (randomItem.name.includes("lava_bucket")) {
+        await this.bot.lookAt(near.position.offset(0, -1, 0), true);
+        await sleep(100);
+        this.bot.activateItem();
+        await sleep(100);
+        this.bot.activateItem();
+        await sleep(300);
+      } else if (randomItem.name.includes("cobweb")) {
+        try {
+          await this.bot.placeBlock(
+            this.bot.blockAt(near.position.offset(0, -1, 0)),
+            new Vec3(0, 1, 0)
+          );
+        } catch (err) {
+          console.error(err);
+        }
+        await sleep(300);
+      }
+      this.placing = false;
+    }
   }
 
   async getBlockBelow() {
