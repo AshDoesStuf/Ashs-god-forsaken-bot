@@ -1,0 +1,24 @@
+{
+  "name": "archer",
+  "version": "1.0.0",
+  "description": "Aimbot go brrrrrr",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Ash",
+  "license": "ISC",
+  "keywords": [],
+  "dependencies": {
+    "chalk": "^4.1.0",
+    "log-update": "^4.0.0",
+    "minecraft-data": "^3.26.0",
+    "minecrafthawkeye": "^1.2.11",
+    "mineflayer": "^4.8.0",
+    "mineflayer-bloodhound": "^0.0.2",
+    "mineflayer-collectblock": "^1.4.1",
+    "mineflayer-movement": "^0.2.1",
+    "mineflayer-pathfinder": "^2.4.2",
+    "strip-indent": "^3.0.0"
+  }
+}

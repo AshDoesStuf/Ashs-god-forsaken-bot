@@ -1,0 +1,1 @@
+/give Frisk netherite_sword{Unbreakable:1,display:{Name:'[{"text":"Frisk\'s Blade","italic":false,"bold":true,"color":"gray"}]',Lore:['[{"text":"yup","italic":false}]']},Enchantments:[{id:knockback,lvl:0},{id:sharpness,lvl:5}]} 1

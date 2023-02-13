@@ -1,0 +1,154 @@
+{
+  "_events": {},
+  "_eventsCount": 0,
+  "id": 3,
+  "position": { "x": 4.398772553960753, "y": 56, "z": 10.351548961558652 },
+  "velocity": { "x": 0, "y": 0, "z": 0 },
+  "yaw": 6.1604668441487345,
+  "pitch": -0.07363107781851097,
+  "onGround": true,
+  "height": 1.62,
+  "width": 0.6,
+  "effects": {},
+  "equipment": [
+    null,
+    null,
+    {
+      "type": 753,
+      "count": 1,
+      "metadata": 0,
+      "nbt": {
+        "type": "compound",
+        "name": "",
+        "value": { "Damage": { "type": "int", "value": 251 } }
+      },
+      "name": "diamond_boots",
+      "displayName": "Diamond Boots",
+      "stackSize": 1
+    },
+    {
+      "type": 752,
+      "count": 1,
+      "metadata": 0,
+      "nbt": {
+        "type": "compound",
+        "name": "",
+        "value": { "Damage": { "type": "int", "value": 251 } }
+      },
+      "name": "diamond_leggings",
+      "displayName": "Diamond Leggings",
+      "stackSize": 1
+    },
+    {
+      "type": 751,
+      "count": 1,
+      "metadata": 0,
+      "nbt": {
+        "type": "compound",
+        "name": "",
+        "value": { "Damage": { "type": "int", "value": 251 } }
+      },
+      "name": "diamond_chestplate",
+      "displayName": "Diamond Chestplate",
+      "stackSize": 1
+    },
+    {
+      "type": 750,
+      "count": 1,
+      "metadata": 0,
+      "nbt": {
+        "type": "compound",
+        "name": "",
+        "value": { "Damage": { "type": "int", "value": 251 } }
+      },
+      "name": "diamond_helmet",
+      "displayName": "Diamond Helmet",
+      "stackSize": 1
+    }
+  ],
+  "isValid": true,
+  "metadata": [
+    0,
+    300,
+    null,
+    false,
+    false,
+    false,
+    0,
+    0,
+    0,
+    20,
+    0,
+    false,
+    0,
+    0,
+    null,
+    0,
+    212,
+    127,
+    1,
+    { "type": "compound", "name": "", "value": {} },
+    { "type": "compound", "name": "", "value": {} }
+  ],
+  "type": "player",
+  "name": "player",
+  "username": "AshWillFindU",
+  "uuid": "fec235e0-69aa-11e9-bfea-002590a1379b",
+  "attributes": {
+    "minecraft:generic.movement_speed": {
+      "value": 0.10000000149011612,
+      "modifiers": []
+    },
+    "minecraft:generic.armor_toughness": {
+      "value": 0,
+      "modifiers": [
+        {
+          "uuid": "845db27c-c624-495f-8c9f-6020a9a58b6b",
+          "amount": 2,
+          "operation": 0
+        },
+        {
+          "uuid": "d8499b04-0e66-4726-ab29-64469d734e0d",
+          "amount": 2,
+          "operation": 0
+        },
+        {
+          "uuid": "9f3d476d-c118-4544-8365-64846904b48e",
+          "amount": 2,
+          "operation": 0
+        },
+        {
+          "uuid": "2ad3f246-fee1-4e67-b886-69fd380bb150",
+          "amount": 2,
+          "operation": 0
+        }
+      ]
+    },
+    "minecraft:generic.armor": {
+      "value": 0,
+      "modifiers": [
+        {
+          "uuid": "845db27c-c624-495f-8c9f-6020a9a58b6b",
+          "amount": 3,
+          "operation": 0
+        },
+        {
+          "uuid": "d8499b04-0e66-4726-ab29-64469d734e0d",
+          "amount": 6,
+          "operation": 0
+        },
+        {
+          "uuid": "9f3d476d-c118-4544-8365-64846904b48e",
+          "amount": 8,
+          "operation": 0
+        },
+        {
+          "uuid": "2ad3f246-fee1-4e67-b886-69fd380bb150",
+          "amount": 3,
+          "operation": 0
+        }
+      ]
+    },
+    "minecraft:generic.attack_speed": { "value": 4, "modifiers": [] }
+  }
+}
