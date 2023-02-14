@@ -11,6 +11,8 @@
   "keywords": [],
   "dependencies": {
     "chalk": "^4.1.0",
+    "ejs": "^3.1.8",
+    "express": "^4.18.2",
     "log-update": "^4.0.0",
     "minecraft-data": "^3.26.0",
     "minecrafthawkeye": "^1.2.11",
@@ -19,6 +21,10 @@
     "mineflayer-collectblock": "^1.4.1",
     "mineflayer-movement": "^0.2.1",
     "mineflayer-pathfinder": "^2.4.2",
+    "socket.io": "^4.6.0",
     "strip-indent": "^3.0.0"
+  },
+  "devDependencies": {
+    "nodeman": "^1.1.2"
   }
 }

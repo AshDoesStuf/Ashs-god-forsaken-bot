@@ -62,7 +62,7 @@ module.exports = (bot) => {
     }
 
     if (message === "test") {
-     await bot.fightBot.pearlAway()
+     await bot.fightBot.explore()
     }
 
     if (args[0] === `${prefix}set`) {
