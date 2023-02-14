@@ -1,82 +1,86 @@
-const eatGap = async () => {
-    let gap;
-    const totem = this.bot.inventory
-      .items()
-      .find((i) => i.name.includes("totem"));
-    for (const item of this.bot.inventory.items()) {
+const mineflayer = require("mineflayer"); // eslint-disable-line
+const { master, prefix } = require("../config.json");
+const { Vec3 } = require("vec3");
+
+/**
+ * @param {mineflayer.Bot} bot // to enable intellisense
+ */
+
+module.exports = (bot) => {
+  bot.on("chat", async (username, message) => {
+    if (username === bot.username) return;
+
+    let test = false;
+    const players = Object.values(bot.players);
+    for (const player of players) {
+      if (master.includes(username)) {
+        test = true;
+      }
+    }
+
+    if (!test) return;
+
+    const args = message.split(" ");
+
+    if (args[0] === `${prefix}fight`) {
+      let localPlayer = args[1] || username;
       if (
-        item.name === "golden_apple" ||
-        item.name === "enchanted_golden_apple"
+        bot.fightBot.knownSexOffenders.length >= 1 &&
+        bot.fightBot.settings.freeForAll
       ) {
-        gap = item;
-        break;
+        localPlayer = bot.fightBot.knownSexOffenders[0];
       }
+
+      if (bot.fightBot.IsCombat)
+        return bot.chat("stfu dumass im already fighting someone");
+      if (localPlayer === bot.username) return bot.chat("go away you wench");
+      bot.fightBot.knownSexOffenders = [];
+      await bot.fightBot.readyUp();
+      await bot.fightBot.setTarget(localPlayer);
+      await bot.fightBot.attack();
     }
 
-    if (gap == undefined) return;
-
-    if (gap && !this.eating && this.IsCombat) {
-      try {
-        if (this.bot.heldItem.type === gap.type) {
-          this.eating = true;
-          if (this.bot.usingHeldItem) {
-            this.bot.deactivateItem();
-          }
-          const pearl = await this.getItemByName("ender_pearl");
-          const shouldPearlaway = Math.random() < 0.0512;
-          const shouldPearlaway1 = pearl ? true : false;
-          if (
-            shouldPearlaway &&
-            shouldPearlaway1 &&
-            this.settings.aggressive
-          ) {
-            await this.pearlAway();
-            this.bot.activateItem();
-            await sleep(1600);
-            this.bot.deactivateItem();
-            this.eating = false;
-          } else {
-            await this.bot.lookAt(
-              this.bot.entity.position.offset(0, 0, -180),
-              true
-            );
-            this.bot.activateItem();
-            await sleep(1600);
-            this.bot.deactivateItem();
-            this.eating = false;
-          }
-        } else if (this.bot?.heldItem.type !== gap.type) {
-          this.eating = true;
-          const pearl = await this.getItemByName("ender_pearl");
-          const shouldPearlaway = Math.random() < 0.0512;
-          const shouldPearlaway1 = pearl ? true : false;
-          if (
-            shouldPearlaway &&
-            shouldPearlaway1 &&
-            this.settings.aggressive
-          ) {
-            await this.pearlAway();
-            await this.bot.equip(gap, "hand");
-            this.bot.activateItem();
-            await sleep(1600);
-            this.bot.deactivateItem();
-            this.eating = false;
-          } else {
-            await this.bot.lookAt(
-              this.bot.entity.position.offset(0, 0, -180),
-              true
-            );
-            this.bot.activateItem();
-            await sleep(1600);
-            this.bot.deactivateItem();
-            this.eating = false;
-          }
-        }
-      } catch (err) {
-        this.logError(err);
-        this.eating = false;
-        await sleep(1000);
-      }
+    if (message.startsWith(`${prefix}stop`)) {
+      bot.fightBot.stop();
     }
-    sleep(1000);
-  };
+
+    if (message === "home") {
+      bot.fightBot.come();
+    }
+
+    if (message === "bon") {
+      console.log(bot.fightBot.debounce);
+    }
+
+    if (message === "pve") {
+      bot.fightBot.safety = true;
+      await bot.fightBot.attackMobs();
+    }
+
+    if (message === "inv") {
+      bot.fightBot.getInv();
+    }
+
+    if (message === "test") {
+      await bot.fightBot.explore();
+    }
+
+    if (args[0] === `${prefix}set`) {
+      bot.fightBot.setSettings(args[1], args[2]);
+    }
+
+    if (message === "clear") {
+      bot.fightBot.clear();
+    }
+
+    if (args[0] === "kit") {
+      bot.fightBot.kit = args[1];
+    }
+  });
+};
+
+const sleep = (ms = 2000) => {
+  return new Promise((r) => {
+    setTimeout(r, ms);
+  });
+};

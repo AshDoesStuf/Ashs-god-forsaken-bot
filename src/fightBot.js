@@ -44,6 +44,7 @@ class Fight {
     this.calcInter = null;
     this.switchInter = null;
     this.pveInter = null;
+    this.kit = "uhc";
 
     this.eating = false;
     this.target_G = null;
@@ -273,8 +274,8 @@ class Fight {
             }
             // Aggressive
             if (this.settings.aggressive) {
-              this.stap();
               this.uppercut();
+              this.stap();
               this.bot.attack(targetEntity);
               this.bot.setControlState("jump", false);
               this.bot.emit("hit");
@@ -699,10 +700,10 @@ class Fight {
   async readyUp() {
     this.gettingReady = true;
     this.bot.chat("/clear");
-    this.bot.chat("/kit claim FriskNeth");
+    this.bot.chat("/kit claim " + this.kit);
     this.bot.chat("/give @s cobweb");
     await sleep(1000);
-
+  
     const inv = this.bot.inventory.items();
     const fireResistancePotion = inv.find((item) => {
       return item.nbt?.value?.Potion?.value.includes("fire");
@@ -714,13 +715,12 @@ class Fight {
       this.gettingReady = false;
       return;
     }
-
-    const { position } = this.bot.entity;
+  
     const throwPot = async (pot) => {
       if (!pot) return;
-
+  
       try {
-        await this.bot.lookAt(position, true);
+        await this.bot.lookAt(this.bot.entity.position.offset(0, -1, 0), true);
         await sleep(10);
         await this.bot.equip(pot, "hand");
         await sleep(340);
@@ -730,11 +730,12 @@ class Fight {
         this.gettingReady = false;
       }
     };
-
+  
     await throwPot(fireResistancePotion);
     await throwPot(swiftnessPotion);
     this.gettingReady = false;
   }
+  
 
   async runAndEatGap() {
     const eatGap = async () => {
@@ -755,7 +756,10 @@ class Fight {
       if (!this.eating && this.IsCombat) {
         try {
           this.eating = true;
-          const isEquipped = this.getOffHand().type === gap.type;
+          const isEquipped =
+            this.getOffHand() !== null
+              ? this.getOffHand().type === gap.type
+              : false;
 
           if (!isEquipped) {
             await this.bot.equip(gap, "off-hand");
@@ -841,9 +845,9 @@ class Fight {
 
     for (let i = 0; i < 20; i++) {
       const offset = position.offset(
-        Math.floor(Math.random() * 30) - 5,
+        Math.floor(Math.random() * 30) - 20,
         0,
-        Math.floor(Math.random() * 30) - 5
+        Math.floor(Math.random() * 30) - 20
       );
       block = this.bot.blockAt(offset);
       this.bot.chat(
@@ -1138,7 +1142,7 @@ class Fight {
             new Vec3(0, 1, 0)
           );
         } catch (err) {
-          console.error(err);
+          this.logError(err);
         }
         await sleep(300);
       } else if (randomItem.name.includes("lava_bucket")) {
