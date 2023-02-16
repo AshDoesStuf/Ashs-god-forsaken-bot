@@ -30,13 +30,37 @@ app.get("/", (req, res) => {
   res.render("index", { bot });
 });
 
+app.get("/chat", (req, res) => {
+  res.render("chat", { bot });
+});
+
+app.get("/greet", (req, res) => {
+  res.sendFile(__dirname + "/public/greet.html");
+});
+
 server.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
 
-bot.on("spawn", async() => {
+bot.on("spawn", async () => {
   await bot.waitForChunksToLoad();
+
   io.on("connection", (socket) => {
+    socket.on("chat message", (message) => {
+      bot.chat(message);
+    });
+
+    bot.on("chat", (username, message) => {
+      socket.emit("game-chat", {
+        username: username,
+        message: message,
+      });
+    });
+
+    socket.on("disconnect", (reason) => {
+      bot.removeAllListeners("chat");
+    });
+
     // Send the initial values of the bot's health and food level
     socket.emit("update", {
       health: bot.health,

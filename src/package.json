@@ -4,7 +4,7 @@
   "description": "Aimbot go brrrrrr",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "devStart": "nodemon index.js free2.ger.idley.net 25594"
   },
   "author": "Ash",
   "license": "ISC",
@@ -25,6 +25,6 @@
     "strip-indent": "^3.0.0"
   },
   "devDependencies": {
-    "nodeman": "^1.1.2"
+    "nodemon": "^2.0.20"
   }
 }
