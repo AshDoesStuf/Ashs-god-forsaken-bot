@@ -14,11 +14,11 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("text").value = "";
   });
 
-  socket.on("game-chat", (data) => {
-    console.log(data.message);
+  socket.on("game-message", (data) => {
     const chatDiv = document.querySelector(".chat-box");
     const messageElement = document.createElement("div");
     messageElement.textContent = `[${data.username}]: ${data.message}`;
     chatDiv.appendChild(messageElement);
   });
 });
+

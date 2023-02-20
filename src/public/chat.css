@@ -16,15 +16,15 @@ body {
   background: #0f2027; /* fallback for old browsers */
   background: -webkit-linear-gradient(
     to right,
-    #2c5364,
-    #203a43,
-    #0f2027
+    #302230,
+    #4a3e4a,
+    #645964
   ); /* Chrome 10-25, Safari 5.1-6 */
   background: linear-gradient(
     to right,
-    #2c5364,
-    #203a43,
-    #0f2027
+    #302230,
+    #4a3e4a,
+    #645964
   ); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
 
   padding: 10px;
@@ -44,7 +44,7 @@ body {
   background-color: #2f3136;
   margin: 10px;
   color: #dcddde;
-  height: 200px;
+  height: 300px;
   width: 100%;
   padding: 10px;
   border-radius: 4px;

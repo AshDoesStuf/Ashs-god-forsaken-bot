@@ -1,8 +1,8 @@
-[2/15/2023, 1:14:52 AM] Message: No block has been placed : the block is still air
+[2/18/2023, 6:42:29 PM] Message: No block has been placed : the block is still air
 Stack Trace: Error: No block has been placed : the block is still air
-    at placeBlockWithOptions (C:\Users\ashpl\Archer\src\node_modules\mineflayer\lib\plugins\place_block.js:17:13)
+    at placeBlockWithOptions (C:\Users\ashpl\archer\src\node_modules\mineflayer\lib\plugins\place_block.js:17:13)
     at runMicrotasks (<anonymous>)
     at processTicksAndRejections (node:internal/process/task_queues:96:5)
-    at async EventEmitter.placeBlock (C:\Users\ashpl\Archer\src\node_modules\mineflayer\lib\plugins\place_block.js:24:5)
-    at async Fight.placeObstacle (C:\Users\ashpl\Archer\src\fightBot.js:1157:11)
-    at async attk (C:\Users\ashpl\Archer\src\fightBot.js:291:17)
+    at async EventEmitter.placeBlock (C:\Users\ashpl\archer\src\node_modules\mineflayer\lib\plugins\place_block.js:24:5)
+    at async Fight.placeObstacle (C:\Users\ashpl\archer\src\fightBot.js:1274:11)
+    at async attk (C:\Users\ashpl\archer\src\fightBot.js:292:17)

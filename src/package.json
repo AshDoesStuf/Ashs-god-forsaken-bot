@@ -11,6 +11,7 @@
   "keywords": [],
   "dependencies": {
     "chalk": "^4.1.0",
+    "collections": "^5.1.13",
     "ejs": "^3.1.8",
     "express": "^4.18.2",
     "log-update": "^4.0.0",
@@ -25,6 +26,7 @@
     "strip-indent": "^3.0.0"
   },
   "devDependencies": {
+    "@types/collections": "^5.1.2",
     "nodemon": "^2.0.20"
   }
 }

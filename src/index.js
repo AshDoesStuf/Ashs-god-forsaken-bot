@@ -6,6 +6,7 @@ const { argv } = require("node:process");
 
 module.exports = argv;
 const { bot, hitCounter } = require("./bot.js");
+const EventEmitter = require("events");
 
 const app = express();
 const server = http.createServer(app);
@@ -25,40 +26,45 @@ app.use(
 );
 
 const port = 3000;
+let data = {};
 
 app.get("/", (req, res) => {
   res.render("index", { bot });
 });
 
 app.get("/chat", (req, res) => {
-  res.render("chat", { bot });
+  res.render("chat", { data });
 });
 
 app.get("/greet", (req, res) => {
   res.sendFile(__dirname + "/public/greet.html");
 });
 
+app.get("/botView", (req, res) => {
+  const block = bot.blockAt(bot.entity.position.offset(1, 0, 0));
+  res.render("botView", { block });
+});
+
 server.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
 
-bot.on("spawn", async () => {
+bot.once("spawn", async () => {
   await bot.waitForChunksToLoad();
+  console.log("bot spawned");
 
+  bot.setMaxListeners(100);
+  EventEmitter.setMaxListeners(100);
   io.on("connection", (socket) => {
     socket.on("chat message", (message) => {
       bot.chat(message);
     });
 
     bot.on("chat", (username, message) => {
-      socket.emit("game-chat", {
+      socket.emit("game-message", {
         username: username,
         message: message,
       });
-    });
-
-    socket.on("disconnect", (reason) => {
-      bot.removeAllListeners("chat");
     });
 
     // Send the initial values of the bot's health and food level
@@ -66,15 +72,16 @@ bot.on("spawn", async () => {
       health: bot.health,
       food: bot.food,
       position: bot.entity.position,
+      velocity: bot.entity.velocity,
+      distance: bot.fightBot.distance,
     });
 
-    socket.emit("settings-update", {
-      agg: bot.fightBot.settings.aggressive,
-      per: bot.fightBot.settings.persistant,
-      hack: bot.fightBot.settings.hacker,
-      display: bot.fightBot.settings.display,
-      ffa: bot.fightBot.settings.freeForAll,
-    });
+    // Create an object to hold the settings
+
+    // Emit the settingsObj to the server using socket.emit()
+    socket.emit("settings-update", bot.fightBot.settings);
+
+    socket.emit("initial-load");
 
     const mcData = require("minecraft-data")(bot.version);
     const currentEffects = [];
@@ -114,6 +121,8 @@ bot.on("spawn", async () => {
       moving: bot.fightBot.isMoving(),
       uppercutting: bot.fightBot.upperCutting,
       exploring: bot.fightBot.exploring,
+      getting_ready: bot.fightBot.gettingReady,
+      healing: bot.fightBot.healing,
     });
 
     // Update the values of the bot's health and food level in real-time
@@ -122,15 +131,11 @@ bot.on("spawn", async () => {
         health: bot.health,
         food: bot.food,
         position: bot.entity.position,
+        velocity: bot.entity.velocity,
+        distance: bot.fightBot.distance,
       });
 
-      socket.emit("settings-update", {
-        agg: bot.fightBot.settings.aggressive,
-        per: bot.fightBot.settings.persistant,
-        hack: bot.fightBot.settings.hacker,
-        display: bot.fightBot.settings.display,
-        ffa: bot.fightBot.settings.freeForAll,
-      });
+      socket.emit("settings-update", bot.fightBot.settings);
 
       socket.emit("main-update", {
         eating: bot.fightBot?.eating,
@@ -167,6 +172,8 @@ bot.on("spawn", async () => {
         moving: bot.fightBot.isMoving(),
         uppercutting: bot.fightBot.upperCutting,
         exploring: bot.fightBot.exploring,
+        getting_ready: bot.fightBot.gettingReady,
+        healing: bot.fightBot.healing,
       });
     }, 50);
 

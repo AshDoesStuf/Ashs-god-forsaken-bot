@@ -1,4 +1,5 @@
 const mineflayer = require("mineflayer");
+const {Team, Location} = require("mineflayer")
 const ReadLn = require("node:readline");
 const { Movements, goals } = require("mineflayer-pathfinder");
 const { argv, stdin, stdout } = require("node:process");
@@ -27,8 +28,9 @@ const bot = mineflayer.createBot({
   mainHand: "left",
   version: "1.18.2",
   port: parseInt(info[3]),
-  viewDistance: "tiny",
+  viewDistance: "normal",
 });
+
 
 bot.loadPlugin(pathfinder);
 bot.loadPlugin(minecraftHawkEye);
@@ -148,9 +150,11 @@ bot.once("spawn", async () => {
 
   setInterval(async () => {
     bot.fightBot.followTarget();
+    bot.fightBot.lookPlayer();
     bot.fightBot.followMob();
     bot.fightBot.block();
     bot.fightBot.setPriority();
+    bot.fightBot.calculateDistance()
     await bot.fightBot.releve();
     if (bot.heldItem) {
       bot.fightBot.debounce = bot.fightBot.changeDebounce(bot?.heldItem);
@@ -158,14 +162,19 @@ bot.once("spawn", async () => {
       bot.fightBot.debounce = bot.fightBot.changeDebounce();
     }
 
+      await bot.fightBot.attempHeal()
+    
+
     if (!bot.usingHeldItem) {
       await bot.fightBot.runAndEatGap();
     }
 
+
+
     bot.fightBot.calcTicks(bot.fightBot?.debounce);
     await bot.fightBot.updateMainHand();
     await bot.fightBot.totemEquip();
-  }, 10);
+  });
 });
 
 bot.on("error", (err) => {
@@ -177,7 +186,7 @@ bot.on("kicked", (r) => {
   process.exit(0);
 });
 bot.on("end", (r) => {
-  console.log(`Kicked due to ${chalk.blue(r)}`);
+  console.log(`Ended due to ${chalk.blue(r)}`);
   process.exit(0);
 });
 

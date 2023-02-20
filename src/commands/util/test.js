@@ -1,4 +1,5 @@
 const mineflayer = require("mineflayer");
+const line = require("line3");
 
 module.exports = {
   name: "test",
@@ -9,7 +10,7 @@ module.exports = {
    * @param {string} username
    * @param {string[]} args
    */
-  execute(bot, username, args) {
-    console.log(username);
+  async execute(bot, username, args) {
+    bot.fightBot.getBlocks()
   },
 };

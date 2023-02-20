@@ -1,13 +1,25 @@
+html,
 body {
-  background-color: #4f4b56;
-  background-image: url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23937cb7' fill-opacity='0.4' fill-rule='evenodd'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z'/%3E%3C/g%3E%3C/svg%3E");
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+body {
+  background: rgb(34, 34, 34);
+  background: linear-gradient(
+    190deg,
+    rgba(34, 34, 34, 1) 0%,
+    rgba(34, 34, 48, 1) 100%
+  );
+  font-family: monospace;
+  height: 100vh;
+  margin: 0 auto;
 }
 
 .bot-info,
 .bot-settings,
 .main-info {
+  color: white;
   float: left;
   margin: 10px;
   width: 400px;
@@ -15,12 +27,12 @@ body {
   background: rgb(34, 193, 195);
   background: linear-gradient(
     0deg,
-    rgba(34, 193, 195, 1) 0%,
-    rgba(253, 187, 45, 1) 100%
+    rgba(24, 24, 24, 1) 0%,
+    rgba(111, 111, 111, 1) 100%
   );
   padding: 10px;
   border-radius: 10px;
-  box-shadow: 5px 5px 10px gray;
+  box-shadow: 5px 5px 10px rgb(50, 50, 50);
   position: relative;
 }
 
@@ -56,20 +68,34 @@ body {
   overflow-x: hidden;
 }
 
+.bot-settings div {
+  margin-bottom: 10px;
+  font-family: monospace;
+  font-weight: 600;
+}
+.bot-settings {
+  padding: 10px
+}
+
 .main-info::-webkit-scrollbar {
   width: 0.5em;
   background-color: rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
+  border-radius: 5px;
 }
 .main-info::-webkit-scrollbar-corner {
   background-color: transparent;
 }
 .main-info::-webkit-scrollbar-thumb {
   background-color: rgba(255, 255, 255, 0.5);
-  border-radius: 20px;
+  border-radius: 5px;
 }
 
 .main-info::-webkit-scrollbar-thumb:hover {
   background-color: rgba(255, 255, 255, 0.8);
 }
+
+body::-webkit-scrollbar {
+  background-color: transparent;
+}
+
 

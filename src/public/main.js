@@ -6,14 +6,32 @@ socket.on("update", (data) => {
   document.getElementById("pos").innerHTML = `X:${Math.floor(
     data.position.x
   )}, Y:${Math.floor(data.position.y)}, Z:${Math.floor(data.position.z)}`;
+  document.getElementById("vel").innerHTML = `X:${data.velocity.x.toFixed(
+    2
+  )}, Y:${data.velocity.y.toFixed(2)}, Z:${data.velocity.z.toFixed(2)}`;
+
+  document.getElementById("dist").innerHTML = data.distance
 });
 
-socket.on("settings-update", (settings) => {
-  document.getElementById("aggressive").innerHTML = settings.agg;
-  document.getElementById("FFA").innerHTML = settings.ffa;
-  document.getElementById("persistant").innerHTML = settings.per;
-  document.getElementById("hacker").innerHTML = settings.hack;
-  document.getElementById("display").innerHTML = settings.display;
+document.addEventListener("DOMContentLoaded", function () {
+  const settingsContainer = document.querySelector(".bot-settings");
+  const settingElements = {};
+
+  socket.on("settings-update", (settings) => {
+    for (const setting in settings) {
+      if (!settingElements[setting]) {
+        const settingElement = document.createElement("div");
+        settingElement.innerHTML = `<span>${setting}:</span> <span id="${setting}">${settings[setting]}</span>`;
+        settingElements[setting] = settingElement;
+        if (settingsContainer) {
+          settingsContainer.appendChild(settingElement);
+        }
+      } else {
+        settingElements[setting].querySelector(`#${setting}`).innerHTML =
+          settings[setting];
+      }
+    }
+  });
 });
 
 socket.on("main-update", (data) => {
@@ -48,4 +66,6 @@ socket.on("main-update", (data) => {
   document.getElementById("moving").innerHTML = data.moving;
   document.getElementById("uppercutting").innerHTML = data.uppercutting;
   document.getElementById("exploring").innerHTML = data.exploring;
+  document.getElementById("ready").innerHTML = data.getting_ready;
+  document.getElementById("healing").innerHTML = data.healing;
 });

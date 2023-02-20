@@ -1,5 +1,5 @@
 /**
- * @type {import("../index").Command}
+ * @type {import("../../index").Command}
  */
 
 module.exports = {
