@@ -11,6 +11,7 @@ module.exports = {
    * @param {string[]} args
    */
   async execute(bot, username, args) {
-    bot.fightBot.getBlocks()
+    
   },
 };
+  
