@@ -36,6 +36,12 @@ module.exports = (bot) => {
         getReady("Sumo", username); // Pass username as argument to getReady function
       } else if (kit === "Neth2") {
         getReady("Neth", username); // Pass username as argument to getReady function
+      } else if (kit === "Neth") {
+        getReady("Neth", username);
+      } else if (kit === "AxeUhc") {
+        setTimeout(() => {
+          getReady("uhc", username);
+        },2000)
       }
     }
 
@@ -67,6 +73,11 @@ module.exports = (bot) => {
       await bot.fightBot.setTarget(username);
       await bot.fightBot.attack();
     } else if (mode === "Sumo") {
+      bot.chat("accepted!");
+      bot.fightBot.clear();
+      await bot.fightBot.setTarget(username);
+      await bot.fightBot.attack();
+    } else if (mode === "uhc") {
       bot.chat("accepted!");
       bot.fightBot.clear();
       await bot.fightBot.setTarget(username);

@@ -10,6 +10,7 @@
   "license": "ISC",
   "keywords": [],
   "dependencies": {
+    "@nxg-org/mineflayer-smooth-look": "^0.1.5",
     "chalk": "^4.1.0",
     "collections": "^5.1.13",
     "ejs": "^3.1.8",
@@ -22,6 +23,7 @@
     "mineflayer-collectblock": "^1.4.1",
     "mineflayer-movement": "^0.2.1",
     "mineflayer-pathfinder": "^2.4.2",
+    "prismarine-viewer": "^1.23.0",
     "socket.io": "^4.6.0",
     "strip-indent": "^3.0.0"
   },

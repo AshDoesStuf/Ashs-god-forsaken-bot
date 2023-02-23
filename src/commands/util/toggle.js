@@ -1,5 +1,5 @@
 module.exports = {
-  name: "set",
+  name: "toggle",
   execute(bot, _, args) {
     bot.fightBot.setSettings(args[1]);
   },

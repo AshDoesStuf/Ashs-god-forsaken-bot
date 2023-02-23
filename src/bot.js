@@ -1,5 +1,5 @@
 const mineflayer = require("mineflayer");
-const {Team, Location} = require("mineflayer")
+const { Team, Location } = require("mineflayer");
 const ReadLn = require("node:readline");
 const { Movements, goals } = require("mineflayer-pathfinder");
 const { argv, stdin, stdout } = require("node:process");
@@ -14,6 +14,7 @@ const { Vec3 } = require("vec3");
 const fs = require("fs");
 const stripindent = require("strip-indent");
 const bloodhoundPlugin = require("mineflayer-bloodhound")(mineflayer);
+const { loader } = require("@nxg-org/mineflayer-smooth-look");
 const minecraftHawkEye = require("minecrafthawkeye");
 const sleep = async (ms = 2000) => {
   return new Promise((r) => setTimeout(r, ms));
@@ -28,12 +29,11 @@ const bot = mineflayer.createBot({
   mainHand: "left",
   version: "1.18.2",
   port: parseInt(info[3]),
-  viewDistance: "normal",
 });
-
 
 bot.loadPlugin(pathfinder);
 bot.loadPlugin(minecraftHawkEye);
+bot.loadPlugin(loader);
 bloodhoundPlugin(bot);
 
 function loadModules(bot) {
@@ -143,6 +143,7 @@ bot.once("spawn", async () => {
     }
   });
 
+
   function stop() {
     bot.fightBot.stop();
     bot.clearControlStates();
@@ -152,9 +153,9 @@ bot.once("spawn", async () => {
     bot.fightBot.followTarget();
     bot.fightBot.lookPlayer();
     bot.fightBot.followMob();
-    bot.fightBot.block();
+    // bot.fightBot.block();
     bot.fightBot.setPriority();
-    bot.fightBot.calculateDistance()
+    bot.fightBot.calculateDistance();
     await bot.fightBot.releve();
     if (bot.heldItem) {
       bot.fightBot.debounce = bot.fightBot.changeDebounce(bot?.heldItem);
@@ -162,18 +163,15 @@ bot.once("spawn", async () => {
       bot.fightBot.debounce = bot.fightBot.changeDebounce();
     }
 
-      await bot.fightBot.attempHeal()
-    
+    await bot.fightBot.attempHeal();
 
     if (!bot.usingHeldItem) {
       await bot.fightBot.runAndEatGap();
     }
 
-
-
     bot.fightBot.calcTicks(bot.fightBot?.debounce);
     await bot.fightBot.updateMainHand();
-    await bot.fightBot.totemEquip();
+    // await bot.fightBot.totemEquip();
   });
 });
 
