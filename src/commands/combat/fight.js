@@ -5,7 +5,7 @@
  */
 module.exports = {
   name: "fight",
-  async execute(bot, username, args) {
+  execute(bot, username, args) {
     const localPlayer = args[1] || username;
     if (
       bot.fightBot.knownSexOffenders.length >= 1 &&
@@ -21,19 +21,9 @@ module.exports = {
       return bot.chat("go away you wench");
     }
 
-    const mode = args[2]
-
-    if(!mode) {
-      bot.fightBot.clear()
-      await bot.fightBot.readyUp()
-      await bot.fightBot.setTarget(localPlayer)
-      await bot.fightBot.attack()
-    } else if (mode === "fist") {
-      bot.fightBot.clear()
-      await bot.fightBot.setTarget(localPlayer)
-      await bot.fightBot.attack()
-    }
-  
-  
+    bot.fightBot.clear();
+    bot.fightBot.readyUp();
+    bot.fightBot.setTarget(localPlayer);
+    bot.fightBot.attack();
   },
 };

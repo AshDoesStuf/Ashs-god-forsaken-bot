@@ -4,7 +4,7 @@
   "description": "Aimbot go brrrrrr",
   "main": "index.js",
   "scripts": {
-    "devStart": "nodemon index.js free2.ger.idley.net 25594"
+    "devStart": "nodemon index.js localhost 1451"
   },
   "author": "Ash",
   "license": "ISC",

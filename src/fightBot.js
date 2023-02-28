@@ -8,7 +8,6 @@ const speedsString = fs.readFileSync("./speeds.json").toString();
 const speeds = JSON.parse(speedsString);
 const { Vec3 } = require("vec3");
 const mineflayer = require("mineflayer");
-const prismarineEntity = require("prismarine-entity").Entity;
 const sleep = async (ms = 2000) => {
   return new Promise((r) => setTimeout(r, ms));
 };
@@ -21,8 +20,6 @@ class Fight {
     /**
      * The player to attack
      */
-    this.target;
-    this.IsCombat = false;
     /**
      * @type {mineflayer.Bot}
      */
@@ -74,9 +71,11 @@ class Fight {
     this.miscInter = null;
     this.switchInter = null;
     this.pveInter = null;
+    this.followInter = null;
 
     this.eating = false;
     this.target_G = null;
+    this.target = "";
     this.pveTarg = null;
     // Bools
     this.exploring = false;
@@ -87,6 +86,7 @@ class Fight {
     this.isPearling = false;
     this.isHungry = false;
     this.isPathfinding = false;
+    this.IsCombat = false;
     this.healing = false;
     this.placing = false;
     this.gettingReady = false;
@@ -169,15 +169,15 @@ class Fight {
    * Sets the bots control-states depending on the situation
    */
   followTarget() {
-    if (!this.target_G) return;
+    const follow = () => {
+      if (!this.target_G) return;
+      const distance = this.bot.entity.position.distanceTo(
+        this.target_G.position
+      );
 
-    const targetPosition = this.target_G.position.clone();
-    const distance = this.bot.entity.position.distanceTo(targetPosition);
-
-    if (this.IsCombat) {
       if (
-        distance >= 2 &&
-        distance <= this.followDistance &&
+        this.IsCombat &&
+        distance > 2 &&
         !this.placing &&
         !this.isPearling &&
         !this.isPathfinding
@@ -190,16 +190,12 @@ class Fight {
         this.bot.setControlState("back", true);
         this.bot.setControlState("back", false);
         // this.bot.setControlState("forward", true);
+      } else {
       }
+    };
 
-      if (this.isPearling && this.bot.getControlState("forward")) {
-        this.bot.setControlState("forward", false);
-      }
-    }
-
-    function multiplyScalar(vector, scalar) {
-      return new Vec3(vector.x * scalar, vector.y * scalar, vector.z * scalar);
-    }
+    follow()
+    this.followInter = setInterval(follow);
   }
 
   followMob() {
@@ -249,19 +245,16 @@ class Fight {
 
     const attk = async () => {
       const targetEntity = this.bot.players[this.target]?.entity;
-      if (targetEntity) {
-        const sword = this.bot.inventory
-          .items()
-          .find((i) => i.name.includes("sword") || i.name.includes("hoe"));
+      if (
+        targetEntity &&
+        !this.eating &&
+        !this.isHungry &&
+        !this.placing &&
+        !this.blocking &&
+        !this.gettingReady
+      ) {
         // Sword combat
-        if (
-          this.distance < this.followDistance &&
-          !this.eating &&
-          !this.isHungry &&
-          !this.placing &&
-          !this.blocking &&
-          !this.gettingReady
-        ) {
+        if (this.distance < this.followDistance) {
           if (this.isShooting) {
             this.bot.hawkEye.stop();
             this.isShooting = false;
@@ -436,14 +429,14 @@ class Fight {
 
     const movementSwitch = async () => {
       if (!this.target || !this.target_G || this.isPathfinding) return;
-    
+
       const distance = this.bot.entity.position.distanceTo(
         this.target_G.position
       );
-    
+
       let timer = 0; // initialize timer to 0
       const maxTime = 3000; // set the maximum time to circle for (in milliseconds)
-    
+
       const state = {
         jump:
           Math.random() < 0.05 &&
@@ -464,7 +457,7 @@ class Fight {
           this.settingsToggled(),
         nothing: Math.random() < 0.5,
       };
-    
+
       if (this.strafeStyles.default) {
         if (state.jump) {
           this.bot.setControlState("jump", true);
@@ -480,7 +473,7 @@ class Fight {
         }
       } else if (this.strafeStyles.circle) {
         timer++; // increment the timer each time we circle
-    
+
         if (state.jump) {
           this.bot.setControlState("jump", true);
         } else if (timer < maxTime && state.strafeLeft) {
@@ -493,7 +486,7 @@ class Fight {
           this.bot.setControlState("left", false);
           this.bot.setControlState("right", false);
         }
-    
+
         if (timer >= maxTime) {
           // stop circling once we've been circling for at least one second
           this.bot.setControlState("left", false);
@@ -501,7 +494,6 @@ class Fight {
         }
       }
     };
-    
 
     const combatModeMovement = async () => {};
 
@@ -546,11 +538,13 @@ class Fight {
       setTimeout(loop, this.currentCooldown);
     };
     loop();
+    this.followTarget()
     this.movementInter = setInterval(() => {
       movementSwitch();
       combatModeMovement();
     }, 500);
     this.miscInter = setInterval(miscCombat, 100);
+    console.log("reached here");
 
     function between(x, min, max) {
       return x >= min && x <= max;
@@ -644,7 +638,7 @@ class Fight {
         !this.isHungry &&
         !this.blocking
       ) {
-        const chanceToBlock = Math.random() * 2 < 0.056;
+        const chanceToBlock = Math.random() * 2 < 0.09583;
         if (chanceToBlock) {
           this.blocking = true;
           this.bot.activateItem(true);
@@ -815,6 +809,8 @@ class Fight {
     clearInterval(this.switchInter);
     clearInterval(this.pveInter);
     clearInterval(this.miscInter);
+    clearInterval(this.followInter);
+    this.followInter = null;
     this.atkInter = null;
     this.pveInter = null;
     this.switchInter = null;

@@ -1,18 +1,9 @@
 const mineflayer = require("mineflayer");
-const { Team, Location } = require("mineflayer");
 const ReadLn = require("node:readline");
-const { Movements, goals } = require("mineflayer-pathfinder");
-const { argv, stdin, stdout } = require("node:process");
-const { password, master, prefix } = require("./config.json");
 const Fight = require("./fightBot.js");
 const pathfinder = require("mineflayer-pathfinder").pathfinder;
-const movement = require("mineflayer-movement");
-const mother = require("./clutch.js").mother;
-const logUpdate = require("log-update");
 const chalk = require("chalk");
-const { Vec3 } = require("vec3");
 const fs = require("fs");
-const stripindent = require("strip-indent");
 const bloodhoundPlugin = require("mineflayer-bloodhound")(mineflayer);
 const { loader } = require("@nxg-org/mineflayer-smooth-look");
 const minecraftHawkEye = require("minecrafthawkeye");
@@ -52,10 +43,6 @@ bot.once("spawn", async () => {
   await bot.waitForChunksToLoad();
   bot.chat("sup sup chicken butt");
 
-  /**
-   * @type {Fight}
-   * For intellisence
-   */
   bot.fightBot = new Fight(bot);
   loadModules(bot);
 
@@ -79,28 +66,16 @@ bot.once("spawn", async () => {
   });
 
   bot.on("death", async () => {
-    if (bot.fightBot.settings.persistant) {
-      stop();
-      bot.fightBot.clear();
-      await bot.fightBot.redo();
-    } else {
-      stop();
-      bot.fightBot.clear();
-      bot.chat("alright");
-    }
+    stop();
+    bot.fightBot.clear();
+    bot.chat("alright");
   });
 
   bot.on("entityDead", async (e) => {
     if (e.id !== bot.entity.id && e.id === bot.fightBot.target_G?.id) {
-      if (bot.fightBot.settings.persistant) {
-        stop();
-        bot.fightBot.clear();
-        await bot.fightBot.redo();
-      } else {
-        stop();
-        bot.fightBot.clear();
-        bot.chat("gg nerd");
-      }
+      stop();
+      bot.fightBot.clear();
+      bot.chat("gg nerd");
 
       const healthPot = bot.inventory
         .items()
@@ -143,6 +118,11 @@ bot.once("spawn", async () => {
     }
   });
 
+  bot.on("physicTick", () => {
+    bot.fightBot.updateMainHand();
+    bot.fightBot.block();
+    bot.fightBot.totemEquip();
+  });
 
   function stop() {
     bot.fightBot.stop();
@@ -150,28 +130,24 @@ bot.once("spawn", async () => {
   }
 
   setInterval(async () => {
-    bot.fightBot.followTarget();
     bot.fightBot.lookPlayer();
     bot.fightBot.followMob();
-    // bot.fightBot.block();
     bot.fightBot.setPriority();
     bot.fightBot.calculateDistance();
-    await bot.fightBot.releve();
+    bot.fightBot.releve();
     if (bot.heldItem) {
       bot.fightBot.debounce = bot.fightBot.changeDebounce(bot?.heldItem);
     } else if (!bot?.heldItem) {
       bot.fightBot.debounce = bot.fightBot.changeDebounce();
     }
 
-    await bot.fightBot.attempHeal();
+    bot.fightBot.attempHeal();
 
     if (!bot.usingHeldItem) {
-      await bot.fightBot.runAndEatGap();
+      bot.fightBot.runAndEatGap();
     }
 
     bot.fightBot.calcTicks(bot.fightBot?.debounce);
-    await bot.fightBot.updateMainHand();
-    // await bot.fightBot.totemEquip();
   });
 });
 
@@ -180,7 +156,7 @@ bot.on("error", (err) => {
   process.exit(0);
 });
 bot.on("kicked", (r) => {
-  console.log(`Kicked due to ${chalk.blue(r)}`);
+  console.log(`Kicked due to ${chalk.white(r)}`);
   process.exit(0);
 });
 bot.on("end", (r) => {
