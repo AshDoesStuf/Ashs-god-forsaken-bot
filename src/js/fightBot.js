@@ -4,7 +4,7 @@ const {
   goals: { GoalNear, GoalFollow, GoalBlock },
 } = require("mineflayer-pathfinder");
 const fs = require("fs");
-const speedsString = fs.readFileSync("./speeds.json").toString();
+const speedsString = fs.readFileSync("../speeds.json").toString();
 const speeds = JSON.parse(speedsString);
 const { Vec3 } = require("vec3");
 const mineflayer = require("mineflayer");

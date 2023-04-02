@@ -1,9 +1,193 @@
-[4/1/2023, 4:20:57 PM] Message: No block has been placed : the block is still fire
-Stack Trace: Error: No block has been placed : the block is still fire
-    at placeBlockWithOptions (C:\Users\ashpl\archer\src\node_modules\mineflayer\lib\plugins\place_block.js:17:13)
-    at runMicrotasks (<anonymous>)
-    at processTicksAndRejections (node:internal/process/task_queues:96:5)
-    at async EventEmitter.placeBlock (C:\Users\ashpl\archer\src\node_modules\mineflayer\lib\plugins\place_block.js:24:5)
-    at async Fight.placeObstacle (C:\Users\ashpl\archer\src\fightBot.js:1909:13)
-    at async attk (C:\Users\ashpl\archer\src\fightBot.js:357:17)
-    at async Timeout.loop [as _onTimeout] (C:\Users\ashpl\archer\src\fightBot.js:609:7)
+
+2023-04-02T05:23:22.881Z :  
+2023-04-02T05:23:22.881Z : ==============================================================
+2023-04-02T05:23:22.881Z :  
+2023-04-02T05:23:22.881Z : Mineflayer bot started on port: 19960
+2023-04-02T05:24:19.557Z : Received ready request: {"gameEngineHost":"172.177.234.77","gameEnginePort":25565,"bot":{"id":209,"name":"Frisk","description":"","repoName":"AshDoesStuf/Ashs-god-forsaken-bot","branch":"master","commit":null,"path":"src","replitLink":"","repoUrl":"https://github.com/AshDoesStuf/Ashs-god-forsaken-bot","author":{"id":131,"username":"AshLikesBots","number":1,"minecraftUsername":"AshWillFindU"},"deleted":false,"programmingLanguage":"JAVASCRIPT"},"botUsername":"B_Frisk","team":"BLUE"}
+2023-04-02T05:24:19.558Z : Loading code for bot with name B_Frisk
+2023-04-02T05:24:19.559Z : Installing any user deps inside of /user-code/0/src...
+2023-04-02T05:24:39.093Z : npm WARN read-shrinkwrap This version of npm is compatible with lockfileVersion@1, but package-lock.json was generated for lockfileVersion@2. I'll try to do my best with it!
+2023-04-02T05:24:39.094Z : npm WARN optional SKIPPING OPTIONAL DEPENDENCY: fsevents@~2.3.2 (node_modules/nodemon/node_modules/chokidar/node_modules/fsevents):
+2023-04-02T05:24:39.094Z : npm WARN notsup SKIPPING OPTIONAL DEPENDENCY: Unsupported platform for fsevents@2.3.2: wanted {"os":"darwin","arch":"any"} (current: {"os":"linux","arch":"x64"})
+2023-04-02T05:24:39.094Z : npm WARN prismarine-biome@1.3.0 requires a peer of minecraft-data@^3.0.0 but none is installed. You must install peer dependencies yourself.
+2023-04-02T05:24:39.094Z : npm WARN archer@1.0.0 No repository field.
+2023-04-02T05:24:39.094Z : 
+2023-04-02T05:24:39.094Z : audited 889 packages in 18.828s
+2023-04-02T05:24:39.094Z : 
+2023-04-02T05:24:39.094Z : 4 packages are looking for funding
+2023-04-02T05:24:39.094Z :   run `npm fund` for details
+2023-04-02T05:24:39.095Z : 
+2023-04-02T05:24:39.095Z : found 0 vulnerabilities
+2023-04-02T05:24:39.095Z : 
+2023-04-02T05:24:39.095Z : 
+2023-04-02T05:24:39.095Z : Deps downloaded, importing code...
+2023-04-02T05:24:46.174Z : An error occurred loading or starting bot. Restarting the bot runtime...
+2023-04-02T05:24:46.175Z :  Error: ENOENT: no such file or directory, open './speeds.json'
+2023-04-02T05:24:46.175Z :     at Object.openSync (fs.js:498:3)
+2023-04-02T05:24:46.175Z :     at Object.readFileSync (fs.js:394:35)
+2023-04-02T05:24:46.175Z :     at Object.<anonymous> (/user-code/0/src/js/fightBot.js:7:25)
+2023-04-02T05:24:46.175Z :     at Module._compile (internal/modules/cjs/loader.js:1114:14)
+2023-04-02T05:24:46.175Z :     at Module.m._compile (/ai-engines/mineflayer-engine/node_modules/ts-node/src/index.ts:1618:23)
+2023-04-02T05:24:46.175Z :     at Module._extensions..js (internal/modules/cjs/loader.js:1143:10)
+2023-04-02T05:24:46.175Z :     at Object.require.extensions.<computed> [as .js] (/ai-engines/mineflayer-engine/node_modules/ts-node/src/index.ts:1621:12)
+2023-04-02T05:24:46.175Z :     at Module.load (internal/modules/cjs/loader.js:979:32)
+2023-04-02T05:24:46.175Z :     at Function.Module._load (internal/modules/cjs/loader.js:819:12)
+2023-04-02T05:24:46.175Z :     at Module.require (internal/modules/cjs/loader.js:1003:19) {
+2023-04-02T05:24:46.175Z :   errno: -2,
+2023-04-02T05:24:46.175Z :   syscall: 'open',
+2023-04-02T05:24:46.176Z :   code: 'ENOENT',
+2023-04-02T05:24:46.176Z :   path: './speeds.json'
+2023-04-02T05:24:46.176Z : }
+2023-04-02T05:24:50.817Z :  
+2023-04-02T05:24:50.817Z : ==============================================================
+2023-04-02T05:24:50.817Z :  
+2023-04-02T05:24:50.817Z : Mineflayer bot started on port: 19960
+2023-04-02T05:25:10.884Z : Received ready request: {"gameEngineHost":"172.177.234.77","gameEnginePort":25565,"bot":{"id":209,"name":"Frisk","description":"","repoName":"AshDoesStuf/Ashs-god-forsaken-bot","branch":"master","commit":null,"path":"src","replitLink":"","repoUrl":"https://github.com/AshDoesStuf/Ashs-god-forsaken-bot","author":{"id":131,"username":"AshLikesBots","number":1,"minecraftUsername":"AshWillFindU"},"deleted":false,"programmingLanguage":"JAVASCRIPT"},"botUsername":"B_Frisk","team":"BLUE"}
+2023-04-02T05:25:10.884Z : Loading code for bot with name B_Frisk
+2023-04-02T05:25:10.885Z : Installing any user deps inside of /user-code/0/src...
+2023-04-02T05:25:20.708Z : npm WARN prismarine-biome@1.3.0 requires a peer of minecraft-data@^3.0.0 but none is installed. You must install peer dependencies yourself.
+2023-04-02T05:25:20.708Z : npm WARN archer@1.0.0 No repository field.
+2023-04-02T05:25:20.708Z : npm WARN optional SKIPPING OPTIONAL DEPENDENCY: fsevents@2.3.2 (node_modules/nodemon/node_modules/fsevents):
+2023-04-02T05:25:20.709Z : npm WARN notsup SKIPPING OPTIONAL DEPENDENCY: Unsupported platform for fsevents@2.3.2: wanted {"os":"darwin","arch":"any"} (current: {"os":"linux","arch":"x64"})
+2023-04-02T05:25:20.709Z : 
+2023-04-02T05:25:20.709Z : audited 889 packages in 8.259s
+2023-04-02T05:25:20.709Z : 
+2023-04-02T05:25:20.709Z : 29 packages are looking for funding
+2023-04-02T05:25:20.709Z :   run `npm fund` for details
+2023-04-02T05:25:20.709Z : 
+2023-04-02T05:25:20.709Z : found 0 vulnerabilities
+2023-04-02T05:25:20.709Z : 
+2023-04-02T05:25:20.710Z : 
+2023-04-02T05:25:20.710Z : Deps downloaded, importing code...
+2023-04-02T05:25:31.020Z : An error occurred loading or starting bot. Restarting the bot runtime...
+2023-04-02T05:25:31.020Z :  Error: ENOENT: no such file or directory, open './speeds.json'
+2023-04-02T05:25:31.020Z :     at Object.openSync (fs.js:498:3)
+2023-04-02T05:25:31.020Z :     at Object.readFileSync (fs.js:394:35)
+2023-04-02T05:25:31.020Z :     at Object.<anonymous> (/user-code/0/src/js/fightBot.js:7:25)
+2023-04-02T05:25:31.020Z :     at Module._compile (internal/modules/cjs/loader.js:1114:14)
+2023-04-02T05:25:31.021Z :     at Module.m._compile (/ai-engines/mineflayer-engine/node_modules/ts-node/src/index.ts:1618:23)
+2023-04-02T05:25:31.021Z :     at Module._extensions..js (internal/modules/cjs/loader.js:1143:10)
+2023-04-02T05:25:31.021Z :     at Object.require.extensions.<computed> [as .js] (/ai-engines/mineflayer-engine/node_modules/ts-node/src/index.ts:1621:12)
+2023-04-02T05:25:31.021Z :     at Module.load (internal/modules/cjs/loader.js:979:32)
+2023-04-02T05:25:31.021Z :     at Function.Module._load (internal/modules/cjs/loader.js:819:12)
+2023-04-02T05:25:31.021Z :     at Module.require (internal/modules/cjs/loader.js:1003:19) {
+2023-04-02T05:25:31.021Z :   errno: -2,
+2023-04-02T05:25:31.021Z :   syscall: 'open',
+2023-04-02T05:25:31.021Z :   code: 'ENOENT',
+2023-04-02T05:25:31.021Z :   path: './speeds.json'
+2023-04-02T05:25:31.021Z : }
+2023-04-02T05:25:36.061Z :  
+2023-04-02T05:25:36.062Z : ==============================================================
+2023-04-02T05:25:36.062Z :  
+2023-04-02T05:25:36.062Z : Mineflayer bot started on port: 19960
+2023-04-02T05:25:49.017Z : Received ready request: {"gameEngineHost":"172.177.234.77","gameEnginePort":25565,"bot":{"id":209,"name":"Frisk","description":"","repoName":"AshDoesStuf/Ashs-god-forsaken-bot","branch":"master","commit":null,"path":"src","replitLink":"","repoUrl":"https://github.com/AshDoesStuf/Ashs-god-forsaken-bot","author":{"id":131,"username":"AshLikesBots","number":1,"minecraftUsername":"AshWillFindU"},"deleted":false,"programmingLanguage":"JAVASCRIPT"},"botUsername":"B_Frisk","team":"BLUE"}
+2023-04-02T05:25:49.018Z : Loading code for bot with name B_Frisk
+2023-04-02T05:25:49.018Z : Installing any user deps inside of /user-code/0/src...
+2023-04-02T05:25:56.700Z : npm WARN prismarine-biome@1.3.0 requires a peer of minecraft-data@^3.0.0 but none is installed. You must install peer dependencies yourself.
+2023-04-02T05:25:56.700Z : npm WARN archer@1.0.0 No repository field.
+2023-04-02T05:25:56.700Z : npm WARN optional SKIPPING OPTIONAL DEPENDENCY: fsevents@2.3.2 (node_modules/nodemon/node_modules/fsevents):
+2023-04-02T05:25:56.700Z : npm WARN notsup SKIPPING OPTIONAL DEPENDENCY: Unsupported platform for fsevents@2.3.2: wanted {"os":"darwin","arch":"any"} (current: {"os":"linux","arch":"x64"})
+2023-04-02T05:25:56.700Z : 
+2023-04-02T05:25:56.755Z : audited 889 packages in 6.498s
+2023-04-02T05:25:56.755Z : 
+2023-04-02T05:25:56.755Z : 29 packages are looking for funding
+2023-04-02T05:25:56.755Z :   run `npm fund` for details
+2023-04-02T05:25:56.755Z : 
+2023-04-02T05:25:56.755Z : found 0 vulnerabilities
+2023-04-02T05:25:56.755Z : 
+2023-04-02T05:25:56.755Z : 
+2023-04-02T05:25:56.755Z : Deps downloaded, importing code...
+2023-04-02T05:26:04.329Z : An error occurred loading or starting bot. Restarting the bot runtime...
+2023-04-02T05:26:04.329Z :  Error: ENOENT: no such file or directory, open './speeds.json'
+2023-04-02T05:26:04.329Z :     at Object.openSync (fs.js:498:3)
+2023-04-02T05:26:04.329Z :     at Object.readFileSync (fs.js:394:35)
+2023-04-02T05:26:04.329Z :     at Object.<anonymous> (/user-code/0/src/js/fightBot.js:7:25)
+2023-04-02T05:26:04.329Z :     at Module._compile (internal/modules/cjs/loader.js:1114:14)
+2023-04-02T05:26:04.329Z :     at Module.m._compile (/ai-engines/mineflayer-engine/node_modules/ts-node/src/index.ts:1618:23)
+2023-04-02T05:26:04.329Z :     at Module._extensions..js (internal/modules/cjs/loader.js:1143:10)
+2023-04-02T05:26:04.329Z :     at Object.require.extensions.<computed> [as .js] (/ai-engines/mineflayer-engine/node_modules/ts-node/src/index.ts:1621:12)
+2023-04-02T05:26:04.329Z :     at Module.load (internal/modules/cjs/loader.js:979:32)
+2023-04-02T05:26:04.329Z :     at Function.Module._load (internal/modules/cjs/loader.js:819:12)
+2023-04-02T05:26:04.329Z :     at Module.require (internal/modules/cjs/loader.js:1003:19) {
+2023-04-02T05:26:04.329Z :   errno: -2,
+2023-04-02T05:26:04.329Z :   syscall: 'open',
+2023-04-02T05:26:04.329Z :   code: 'ENOENT',
+2023-04-02T05:26:04.329Z :   path: './speeds.json'
+2023-04-02T05:26:04.329Z : }
+2023-04-02T05:26:08.027Z :  
+2023-04-02T05:26:08.028Z : ==============================================================
+2023-04-02T05:26:08.028Z :  
+2023-04-02T05:26:08.028Z : Mineflayer bot started on port: 19960
+2023-04-02T05:26:08.064Z : Received ready request: {"gameEngineHost":"172.177.234.77","gameEnginePort":25565,"bot":{"id":209,"name":"Frisk","description":"","repoName":"AshDoesStuf/Ashs-god-forsaken-bot","branch":"master","commit":null,"path":"src","replitLink":"","repoUrl":"https://github.com/AshDoesStuf/Ashs-god-forsaken-bot","author":{"id":131,"username":"AshLikesBots","number":1,"minecraftUsername":"AshWillFindU"},"deleted":false,"programmingLanguage":"JAVASCRIPT"},"botUsername":"B_Frisk","team":"BLUE"}
+2023-04-02T05:26:08.064Z : Loading code for bot with name B_Frisk
+2023-04-02T05:26:08.065Z : Installing any user deps inside of /user-code/0/src...
+2023-04-02T05:26:12.353Z : npm WARN prismarine-biome@1.3.0 requires a peer of minecraft-data@^3.0.0 but none is installed. You must install peer dependencies yourself.
+2023-04-02T05:26:12.353Z : npm WARN archer@1.0.0 No repository field.
+2023-04-02T05:26:12.353Z : npm WARN optional SKIPPING OPTIONAL DEPENDENCY: fsevents@2.3.2 (node_modules/nodemon/node_modules/fsevents):
+2023-04-02T05:26:12.353Z : npm WARN notsup SKIPPING OPTIONAL DEPENDENCY: Unsupported platform for fsevents@2.3.2: wanted {"os":"darwin","arch":"any"} (current: {"os":"linux","arch":"x64"})
+2023-04-02T05:26:12.353Z : 
+2023-04-02T05:26:12.353Z : audited 889 packages in 3.645s
+2023-04-02T05:26:12.353Z : 
+2023-04-02T05:26:12.353Z : 29 packages are looking for funding
+2023-04-02T05:26:12.353Z :   run `npm fund` for details
+2023-04-02T05:26:12.353Z : 
+2023-04-02T05:26:12.353Z : found 0 vulnerabilities
+2023-04-02T05:26:12.354Z : 
+2023-04-02T05:26:12.354Z : 
+2023-04-02T05:26:12.354Z : Deps downloaded, importing code...
+2023-04-02T05:26:17.122Z : An error occurred loading or starting bot. Restarting the bot runtime...
+2023-04-02T05:26:17.122Z :  Error: ENOENT: no such file or directory, open './speeds.json'
+2023-04-02T05:26:17.122Z :     at Object.openSync (fs.js:498:3)
+2023-04-02T05:26:17.122Z :     at Object.readFileSync (fs.js:394:35)
+2023-04-02T05:26:17.122Z :     at Object.<anonymous> (/user-code/0/src/js/fightBot.js:7:25)
+2023-04-02T05:26:17.122Z :     at Module._compile (internal/modules/cjs/loader.js:1114:14)
+2023-04-02T05:26:17.122Z :     at Module.m._compile (/ai-engines/mineflayer-engine/node_modules/ts-node/src/index.ts:1618:23)
+2023-04-02T05:26:17.123Z :     at Module._extensions..js (internal/modules/cjs/loader.js:1143:10)
+2023-04-02T05:26:17.123Z :     at Object.require.extensions.<computed> [as .js] (/ai-engines/mineflayer-engine/node_modules/ts-node/src/index.ts:1621:12)
+2023-04-02T05:26:17.123Z :     at Module.load (internal/modules/cjs/loader.js:979:32)
+2023-04-02T05:26:17.123Z :     at Function.Module._load (internal/modules/cjs/loader.js:819:12)
+2023-04-02T05:26:17.123Z :     at Module.require (internal/modules/cjs/loader.js:1003:19) {
+2023-04-02T05:26:17.123Z :   errno: -2,
+2023-04-02T05:26:17.123Z :   syscall: 'open',
+2023-04-02T05:26:17.123Z :   code: 'ENOENT',
+2023-04-02T05:26:17.123Z :   path: './speeds.json'
+2023-04-02T05:26:17.123Z : }
+2023-04-02T05:32:32.409Z :  
+2023-04-02T05:32:32.409Z : ==============================================================
+2023-04-02T05:32:32.409Z :  
+2023-04-02T05:32:32.409Z : Mineflayer bot started on port: 19960
+2023-04-02T05:32:32.438Z : Received ready request: {"gameEngineHost":"172.177.234.77","gameEnginePort":25565,"bot":{"id":209,"name":"Frisk","description":"","repoName":"AshDoesStuf/Ashs-god-forsaken-bot","branch":"master","commit":null,"path":"src","replitLink":"","repoUrl":"https://github.com/AshDoesStuf/Ashs-god-forsaken-bot","author":{"id":131,"username":"AshLikesBots","number":1,"minecraftUsername":"AshWillFindU"},"deleted":false,"programmingLanguage":"JAVASCRIPT"},"botUsername":"B_Frisk","team":"BLUE"}
+2023-04-02T05:32:32.438Z : Loading code for bot with name B_Frisk
+2023-04-02T05:32:32.438Z : Installing any user deps inside of /user-code/0/src...
+2023-04-02T05:32:50.260Z : npm WARN read-shrinkwrap This version of npm is compatible with lockfileVersion@1, but package-lock.json was generated for lockfileVersion@2. I'll try to do my best with it!
+2023-04-02T05:32:50.260Z : npm WARN optional SKIPPING OPTIONAL DEPENDENCY: fsevents@~2.3.2 (node_modules/nodemon/node_modules/chokidar/node_modules/fsevents):
+2023-04-02T05:32:50.260Z : npm WARN notsup SKIPPING OPTIONAL DEPENDENCY: Unsupported platform for fsevents@2.3.2: wanted {"os":"darwin","arch":"any"} (current: {"os":"linux","arch":"x64"})
+2023-04-02T05:32:50.260Z : npm WARN prismarine-biome@1.3.0 requires a peer of minecraft-data@^3.0.0 but none is installed. You must install peer dependencies yourself.
+2023-04-02T05:32:50.260Z : npm WARN archer@1.0.0 No repository field.
+2023-04-02T05:32:50.260Z : 
+2023-04-02T05:32:50.262Z : added 89 packages from 110 contributors and audited 978 packages in 17.182s
+2023-04-02T05:32:50.262Z : 
+2023-04-02T05:32:50.262Z : 4 packages are looking for funding
+2023-04-02T05:32:50.262Z :   run `npm fund` for details
+2023-04-02T05:32:50.262Z : 
+2023-04-02T05:32:50.262Z : found 0 vulnerabilities
+2023-04-02T05:32:50.262Z : 
+2023-04-02T05:32:50.262Z : 
+2023-04-02T05:32:50.263Z : Deps downloaded, importing code...
+2023-04-02T05:32:54.825Z : An error occurred loading or starting bot. Restarting the bot runtime...
+2023-04-02T05:32:54.825Z :  Error: ENOENT: no such file or directory, open './speeds.json'
+2023-04-02T05:32:54.825Z :     at Object.openSync (fs.js:498:3)
+2023-04-02T05:32:54.825Z :     at Object.readFileSync (fs.js:394:35)
+2023-04-02T05:32:54.825Z :     at Object.<anonymous> (/user-code/0/src/js/fightBot.js:7:25)
+2023-04-02T05:32:54.825Z :     at Module._compile (internal/modules/cjs/loader.js:1114:14)
+2023-04-02T05:32:54.825Z :     at Module.m._compile (/ai-engines/mineflayer-engine/node_modules/ts-node/src/index.ts:1618:23)
+2023-04-02T05:32:54.825Z :     at Module._extensions..js (internal/modules/cjs/loader.js:1143:10)
+2023-04-02T05:32:54.825Z :     at Object.require.extensions.<computed> [as .js] (/ai-engines/mineflayer-engine/node_modules/ts-node/src/index.ts:1621:12)
+2023-04-02T05:32:54.825Z :     at Module.load (internal/modules/cjs/loader.js:979:32)
+2023-04-02T05:32:54.825Z :     at Function.Module._load (internal/modules/cjs/loader.js:819:12)
+2023-04-02T05:32:54.825Z :     at Module.require (internal/modules/cjs/loader.js:1003:19) {
+2023-04-02T05:32:54.825Z :   errno: -2,
+2023-04-02T05:32:54.825Z :   syscall: 'open',
+2023-04-02T05:32:54.825Z :   code: 'ENOENT',
+2023-04-02T05:32:54.825Z :   path: './speeds.json'
+2023-04-02T05:32:54.825Z : }
