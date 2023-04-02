@@ -2,9 +2,9 @@
   "name": "archer",
   "version": "1.0.0",
   "description": "Aimbot go brrrrrr",
-  "main": "index.js",
+  "main": "main.js",
   "scripts": {
-    "devStart": "nodemon index.js beta1.qloxhost.net 25566"
+    "devStart": "nodemon main.js beta1.qloxhost.net 25566"
   },
   "author": "Ash",
   "license": "ISC",
