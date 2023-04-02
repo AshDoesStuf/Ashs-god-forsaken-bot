@@ -5,7 +5,7 @@ const path = require("path");
 const { argv } = require("node:process");
 
 module.exports = argv;
-const { bot, hitCounter } = require("./js/bot.js");
+const { bot, hitCounter } = require("./bot.js");
 const EventEmitter = require("events");
 
 const app = express();

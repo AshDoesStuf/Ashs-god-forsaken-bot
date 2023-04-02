@@ -1,6 +1,6 @@
 const mineflayer = require("mineflayer");
 const ReadLn = require("node:readline");
-const Fight = require("./fightBot.js");
+const Fight = require("./js/fightBot.js");
 const pathfinder = require("mineflayer-pathfinder").pathfinder;
 const chalk = require("chalk");
 const fs = require("fs");
@@ -12,7 +12,7 @@ const sleep = async (ms = 2000) => {
   return new Promise((r) => setTimeout(r, ms));
 };
 
-const info = require("./index.js");
+const info = require("./main.js");
 const path = require("path");
 
 const bot = mineflayer.createBot({
