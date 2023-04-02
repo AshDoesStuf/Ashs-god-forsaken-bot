@@ -1,9 +1,9 @@
-[2/25/2023, 4:51:54 PM] Message: No block has been placed : the block is still fire
+[4/1/2023, 4:20:57 PM] Message: No block has been placed : the block is still fire
 Stack Trace: Error: No block has been placed : the block is still fire
     at placeBlockWithOptions (C:\Users\ashpl\archer\src\node_modules\mineflayer\lib\plugins\place_block.js:17:13)
     at runMicrotasks (<anonymous>)
     at processTicksAndRejections (node:internal/process/task_queues:96:5)
     at async EventEmitter.placeBlock (C:\Users\ashpl\archer\src\node_modules\mineflayer\lib\plugins\place_block.js:24:5)
-    at async Fight.placeObstacle (C:\Users\ashpl\archer\src\fightBot.js:1451:11)
-    at async attk (C:\Users\ashpl\archer\src\fightBot.js:290:17)
-    at async Timeout.loop [as _onTimeout] (C:\Users\ashpl\archer\src\fightBot.js:537:7)
+    at async Fight.placeObstacle (C:\Users\ashpl\archer\src\fightBot.js:1909:13)
+    at async attk (C:\Users\ashpl\archer\src\fightBot.js:357:17)
+    at async Timeout.loop [as _onTimeout] (C:\Users\ashpl\archer\src\fightBot.js:609:7)

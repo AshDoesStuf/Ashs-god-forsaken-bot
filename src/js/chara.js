@@ -1,25 +1,19 @@
+const { argv } = require("node:process");
+
 const mineflayer = require("mineflayer");
-const ReadLn = require("node:readline");
-const Fight = require("./fightBot.js");
-const pathfinder = require("mineflayer-pathfinder").pathfinder;
-const chalk = require("chalk");
-const fs = require("fs");
 const bloodhoundPlugin = require("mineflayer-bloodhound")(mineflayer);
+const chalk = require("chalk");
 const { loader } = require("@nxg-org/mineflayer-smooth-look");
 const minecraftHawkEye = require("minecrafthawkeye");
-const sleep = async (ms = 2000) => {
-  return new Promise((r) => setTimeout(r, ms));
-};
-
-const info = require("./index.js");
-const path = require("path");
+const Fight = require("./fightBot.js");
+const pathfinder = require("mineflayer-pathfinder").pathfinder;
 
 const bot = mineflayer.createBot({
-  host: info[2] || "localhost",
-  username: "Frisk",
-  mainHand: "left",
+  host: argv[2],
+  port: parseInt(argv[3]),
+  username: "Chara",
   version: "1.18.2",
-  port: parseInt(info[3]),
+  mainHand: "left",
 });
 
 bot.loadPlugin(pathfinder);
@@ -27,48 +21,51 @@ bot.loadPlugin(minecraftHawkEye);
 bot.loadPlugin(loader);
 bloodhoundPlugin(bot);
 
-function loadModules(bot) {
-  const MODULES_DIRECTORY = path.join(__dirname, "modules");
-  const modules = fs
-    .readdirSync(MODULES_DIRECTORY) // find the plugins
-    .filter((x) => x.endsWith(".js")) // only use .js files
-    .map((pluginName) => require(path.join(MODULES_DIRECTORY, pluginName)));
-
-  bot.loadPlugins(modules);
-}
-let hitCounter = 0;
-let tempCount = 0;
 bot.bloodhound.yaw_correlation_enabled = true;
+
 bot.once("spawn", async () => {
   await bot.waitForChunksToLoad();
-  bot.chat("sup sup chicken butt");
+
+  bot.chat("Heyyy =)");
 
   bot.fightBot = new Fight(bot);
-  loadModules(bot);
-
-  bot.on("hit", () => {
-    hitCounter++;
-    if (hitCounter === tempCount + 100 && bot.fightBot.settings.display) {
-      bot.chat(`lets goo ${hitCounter} hits`);
-      tempCount = hitCounter;
-    }
-  });
-
-  bot.on("fight-stop", () => {
-    if (hitCounter !== 0 && bot.fightBot.settings.display) {
-      bot.chat("got: " + hitCounter + " hits in");
-      hitCounter = 0;
-      tempCount = 0;
-    }
-
-    hitCounter = 0;
-    tempCount = 0;
-  });
 
   bot.on("death", async () => {
     stop();
     bot.fightBot.clear();
     bot.chat("alright");
+  });
+
+  bot.on("chat", (u, m) => {
+    if (u === bot.username) return;
+
+    const args = m.split(" ");
+
+    if (args[0] === "c!fight") {
+      const localPlayer = args[1] || username;
+      if (
+        bot.fightBot.knownSexOffenders.length >= 1 &&
+        bot.fightBot.settings.freeForAll
+      ) {
+        localPlayer = bot.fightBot.knownSexOffenders[0];
+      }
+
+      if (bot.fightBot.IsCombat) {
+        return bot.chat("stfu dumass im already fighting someone");
+      }
+      if (localPlayer === bot.username) {
+        return bot.chat("go away you wench");
+      }
+
+      bot.fightBot.clear();
+      bot.fightBot.readyUp();
+      bot.fightBot.setTarget(localPlayer);
+      bot.fightBot.attack();
+    }
+
+    if (args[0] === "c!stop") {
+      stop();
+    }
   });
 
   bot.on("entityDead", async (e) => {
@@ -120,8 +117,9 @@ bot.once("spawn", async () => {
 
   bot.on("physicTick", () => {
     bot.fightBot.updateMainHand();
-    bot.fightBot.block();
     bot.fightBot.totemEquip();
+    bot.fightBot.testMovement();
+    bot.fightBot.update();
   });
 
   function stop() {
@@ -163,5 +161,3 @@ bot.on("end", (r) => {
   console.log(`Ended due to ${chalk.blue(r)}`);
   process.exit(0);
 });
-
-module.exports = { bot, hitCounter };

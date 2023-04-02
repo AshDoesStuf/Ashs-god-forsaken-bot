@@ -4,7 +4,7 @@
   "description": "Aimbot go brrrrrr",
   "main": "index.js",
   "scripts": {
-    "devStart": "nodemon index.js localhost 1451"
+    "devStart": "nodemon index.js beta1.qloxhost.net 25566"
   },
   "author": "Ash",
   "license": "ISC",
@@ -24,6 +24,7 @@
     "mineflayer-movement": "^0.2.1",
     "mineflayer-pathfinder": "^2.4.2",
     "prismarine-viewer": "^1.23.0",
+    "rg-bot": "^1.10.0",
     "socket.io": "^4.6.0",
     "strip-indent": "^3.0.0"
   },

@@ -16,6 +16,12 @@ body {
   margin: 0 auto;
 }
 
+ul {
+  list-style-type: none;
+  margin: 0 auto;
+  padding: 0;
+}
+
 .bot-info,
 .bot-settings,
 .main-info {
@@ -26,14 +32,23 @@ body {
   height: 200px;
   background: rgb(34, 193, 195);
   background: linear-gradient(
-    0deg,
+    5deg,
     rgba(24, 24, 24, 1) 0%,
     rgba(111, 111, 111, 1) 100%
   );
+  animation: spin 5s linear infinite;
   padding: 10px;
+  border: 3px solid;
   border-radius: 10px;
   box-shadow: 5px 5px 10px rgb(50, 50, 50);
   position: relative;
+}
+
+.bot-info ul li {
+  font-size: 16px;
+  padding-top: 2px;
+  margin-bottom: 10px;
+  /* add any other styles you want here */
 }
 
 .main-info {
@@ -54,6 +69,16 @@ body {
   transform: translate(-50%, 0);
 }
 
+.console {
+  background-color: rgba(18, 18, 18, 0.8);
+  border-radius: 5px;
+  width: 600px;
+  height: 400px;
+  position: absolute;
+  left: 10px;
+  top: 50%;
+}
+
 .main-info p {
   font-size: 18px;
   margin: 10px 0;
@@ -70,11 +95,17 @@ body {
 
 .bot-settings div {
   margin-bottom: 10px;
-  font-family: monospace;
+  padding: 0 auto;
   font-weight: 600;
 }
+
+.bot-settings div span {
+  font-family: monospace;
+  font-size: 16px;
+}
+
 .bot-settings {
-  padding: 10px
+  padding: 10px;
 }
 
 .main-info::-webkit-scrollbar {
@@ -98,4 +129,50 @@ body::-webkit-scrollbar {
   background-color: transparent;
 }
 
+@keyframes spin {
+  0% {
+    border-color: #ff0000;
+  }
+  16.666% {
+    border-color: #ff7f00;
+  }
+  33.333% {
+    border-color: #ffff00;
+  }
+  50% {
+    border-color: #00ff00;
+  }
+  66.666% {
+    border-color: #0000ff;
+  }
+  83.333% {
+    border-color: #8b00ff;
+  }
+  100% {
+    border-color: #ff0000;
+  }
+}
 
+@keyframes colorSwap {
+  0% {
+    background: linear-gradient(
+      to right,
+      #393567 0%,
+      #242140 100%
+    );
+  }
+  50% {
+    background: linear-gradient(
+      to right,
+      #3C3F52 0%,
+      #1D1F2A 100%
+    );
+  }
+  100% {
+    background: linear-gradient(
+      to right,
+      #393567 0%,
+      #242140 100%
+    );
+  }
+}

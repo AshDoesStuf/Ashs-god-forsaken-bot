@@ -1,7 +1,7 @@
-const { master } = require("./config.json");
+const { master } = require("../config.json");
 const {
   Movements,
-  goals: { GoalNear, GoalFollow },
+  goals: { GoalNear, GoalFollow, GoalBlock },
 } = require("mineflayer-pathfinder");
 const fs = require("fs");
 const speedsString = fs.readFileSync("./speeds.json").toString();
@@ -11,6 +11,14 @@ const mineflayer = require("mineflayer");
 const sleep = async (ms = 2000) => {
   return new Promise((r) => setTimeout(r, ms));
 };
+
+const CarinalDirections = {
+  north: { x: 0, z: -1, name: "north" },
+  south: { x: 0, z: 1, name: "south" },
+  east: { x: 1, z: 0, name: "east" },
+  west: { x: -1, z: 0, name: "west" },
+};
+
 class Fight {
   /**
    *
@@ -62,6 +70,9 @@ class Fight {
     this.tempTargetE = null;
     this.tempTargetN = "";
     this.kit = "FriskNeth";
+    this.faceDirectionZ = "";
+    this.faceDirectionX = "";
+    this.direction = { x: 0, z: 0, name: "" };
     // Random bs
     this.lookInter = null;
     this.atkInter = null;
@@ -78,11 +89,13 @@ class Fight {
     this.target = "";
     this.pveTarg = null;
     // Bools
+    this.targetAbove3 = false;
     this.exploring = false;
     this.hasReached = false;
     this.isSprinting = false;
     this.closeToTarg = false;
     this.isShooting = false;
+    this.building = false;
     this.isPearling = false;
     this.isHungry = false;
     this.isPathfinding = false;
@@ -99,7 +112,7 @@ class Fight {
     this.ashtapping = false;
     // Ints
     this.followDistance = 20;
-    this.attackDistnace = 2.7;
+    this.attackDistnace = 2.9;
     this.maxBowDistance = 35;
     this.debounce = 0.6; //Default;
     this.timeToReachTarg = 0;
@@ -176,11 +189,27 @@ class Fight {
       );
 
       if (
+        (this.bot.entity.velocity.x === 0 ||
+          this.bot.entity.velocity.x === -0) &&
+        (this.bot.entity.velocity.z === 0 ||
+          this.bot.entity.velocity.z === -0) &&
+        !this.wtapping &&
+        !this.ashtapping &&
+        !this.stapping &&
+        !this.targetAbove3
+      ) {
+        // Means we are stuck
+        this.bot.setControlState("jump", true);
+        setTimeout(() => this.bot.setControlState("jump", false), 200);
+      }
+
+      if (
         this.IsCombat &&
         distance > 2 &&
         !this.placing &&
         !this.isPearling &&
-        !this.isPathfinding
+        !this.isPathfinding &&
+        !this.targetAbove3
       ) {
         this.bot.setControlState("sprint", true);
         this.bot.setControlState("forward", true);
@@ -194,7 +223,7 @@ class Fight {
       }
     };
 
-    follow()
+    follow();
     this.followInter = setInterval(follow);
   }
 
@@ -210,7 +239,7 @@ class Fight {
     const targetPosition = this.pveTarg.position.clone();
     const distance = this.bot.entity.position.distanceTo(targetPosition);
 
-    if (nearestEntity) {
+    if (nearestEntity && !this.isShooting && !this.isPearling) {
       if (distance > 2.8) {
         this.bot.setControlState("sprint", true);
         this.bot.setControlState("forward", true);
@@ -253,6 +282,34 @@ class Fight {
         !this.blocking &&
         !this.gettingReady
       ) {
+        if (
+          this.distance < this.followDistance &&
+          this.targetAbove3 &&
+          this.hasRangedWeapon()
+        ) {
+          if (this.IsCombat) {
+            this.IsCombat = false;
+          }
+
+          if (this.isShooting) {
+            this.isShooting = false;
+            this.bot.hawkEye.stop();
+          }
+
+          const weapon = "bow";
+
+          await this.backUp();
+
+          // if (!this.isLookingAtTarget()) {
+          //   return;
+          // }
+
+          this.isShooting = true;
+          this.bot.clearControlStates();
+          this.bot.hawkEye.autoAttack(targetEntity, weapon);
+          return;
+        }
+
         // Sword combat
         if (this.distance < this.followDistance) {
           if (this.isShooting) {
@@ -267,7 +324,7 @@ class Fight {
             let shouldPlace = false;
 
             if (this.settings.aggressive) {
-              shouldPlace = Math.random() < 0.44;
+              shouldPlace = Math.random() < 0.8924;
             }
             // Normal
 
@@ -278,12 +335,13 @@ class Fight {
               this.bot.emit("hit");
             }
             // Aggressive
-            else if (this.settings.aggressive) {
+            else if (this.settings.aggressive && this.isLookingAtTarget()) {
               if (
                 shouldPlace &&
                 targetEntity.onGround &&
                 this.checkForPlacables()
               ) {
+                this.bot.clearControlStates();
                 this.bot.setControlState("back", true);
                 await sleep(300);
                 this.bot.setControlState("back", false);
@@ -293,7 +351,7 @@ class Fight {
               }
 
               this.uppercut();
-              this.stap();
+              this.stap("pre");
               this.bot.attack(targetEntity);
               if (this.bot.getControlState("jump")) {
                 this.bot.setControlState("jump", false);
@@ -304,19 +362,25 @@ class Fight {
             // Crit spam 😞
             else if (
               this.settings.critSpam &&
-              this.bot.entity.velocity.y < -0.44
+              this.bot.entity.velocity.y < -0.44 &&
+              this.isLookingAtTarget()
             ) {
               this.tap();
               this.bot.attack(targetEntity);
               this.bot.emit("hit");
             }
             // Aggressive + FFA
-            else if (this.settings.aggressive && this.settings.freeForAll) {
+            else if (
+              this.settings.aggressive &&
+              this.settings.freeForAll &&
+              this.isLookingAtTarget()
+            ) {
               if (
                 shouldPlace &&
                 targetEntity.onGround &&
                 this.checkForPlacables()
               ) {
+                this.bot.clearControlStates();
                 this.bot.setControlState("back", true);
                 await sleep(300);
                 this.bot.setControlState("back", false);
@@ -435,7 +499,7 @@ class Fight {
       );
 
       let timer = 0; // initialize timer to 0
-      const maxTime = 3000; // set the maximum time to circle for (in milliseconds)
+      const maxTime = 2500; // set the maximum time to circle for (in milliseconds)
 
       const state = {
         jump:
@@ -458,7 +522,7 @@ class Fight {
         nothing: Math.random() < 0.5,
       };
 
-      if (this.strafeStyles.default) {
+      if (this.strafeStyles.default && this.closeToTarg) {
         if (state.jump) {
           this.bot.setControlState("jump", true);
         } else if (state.strafeLeft) {
@@ -471,7 +535,7 @@ class Fight {
           this.bot.setControlState("left", false);
           this.bot.setControlState("right", false);
         }
-      } else if (this.strafeStyles.circle) {
+      } else if (this.strafeStyles.circle && this.closeToTarg) {
         timer++; // increment the timer each time we circle
 
         if (state.jump) {
@@ -488,7 +552,6 @@ class Fight {
         }
 
         if (timer >= maxTime) {
-          // stop circling once we've been circling for at least one second
           this.bot.setControlState("left", false);
           this.bot.setControlState("right", false);
         }
@@ -538,13 +601,12 @@ class Fight {
       setTimeout(loop, this.currentCooldown);
     };
     loop();
-    this.followTarget()
+    this.followTarget();
     this.movementInter = setInterval(() => {
       movementSwitch();
       combatModeMovement();
     }, 500);
     this.miscInter = setInterval(miscCombat, 100);
-    console.log("reached here");
 
     function between(x, min, max) {
       return x >= min && x <= max;
@@ -596,7 +658,7 @@ class Fight {
       const nearestEntity = this.bot.nearestEntity(
         (e) =>
           e.type === "mob" &&
-          e.position.distanceTo(this.bot.entity.position) <= 16 &&
+          e.position.distanceTo(this.bot.entity.position) <= 32 &&
           !passiveMobs.includes(e.mobType)
       );
 
@@ -611,15 +673,46 @@ class Fight {
         .distanceTo(nearestEntity.position)
         .toFixed(2);
 
-      if (distance >= 0 && distance <= 3 && !this.eating && !this.isHungry) {
-        this.bot.attack(nearestEntity);
-      }
+      const distanceY = nearestEntity.position.y - this.bot.entity.position.y;
 
+      if (distanceY >= 3 && distance < 10) {
+        if (this.isShooting) {
+          this.isShooting = false;
+          this.bot.hawkEye.stop();
+        }
+
+        const bow = this.getItemByName("bow");
+        const arrows = this.getItemByName("arrow");
+
+        const weapon = "bow";
+
+        if (bow && arrows && !this.isShooting) {
+          this.bot.clearControlStates();
+          this.isShooting = true;
+          this.bot.hawkEye.autoAttack(nearestEntity, weapon);
+        }
+        return;
+      }
+      // Melee
+      if (distance < 10 && !this.eating && !this.isHungry) {
+        if (between(distance, 0, 3)) {
+          if (this.isShooting) {
+            this.isShooting = false;
+            this.bot.hawkEye.stop();
+          }
+
+          this.bot.attack(nearestEntity);
+        }
+      }
       this.pveInter = setTimeout(loop, this.currentCooldown);
     };
 
     await this.lookMob();
     loop();
+
+    function between(x, min, max) {
+      return x >= min && x <= max;
+    }
   }
 
   async block() {
@@ -660,20 +753,365 @@ class Fight {
     });
   }
 
+  async backUp() {
+    return new Promise(async (res) => {
+      await this.bot.lookAt(this.target_G.position);
+
+      this.bot.setControlState("back", true);
+      await sleep(1200);
+      this.bot.setControlState("back", false);
+      res();
+    });
+  }
+
+  update() {
+    if (
+      this.target_G != null &&
+      Math.round(this.target_G.position.y - this.bot.entity.position.y) >= 3
+    ) {
+      this.targetAbove3 = true;
+    } else {
+      this.targetAbove3 = false;
+    }
+
+    // Idk if better
+    if (this.bot.entity.velocity.z > 0 || this.bot.entity.velocity.z > -0) {
+      this.direction = CarinalDirections.south;
+      return;
+    }
+    if (this.bot.entity.velocity.z < 0 || this.bot.entity.velocity.z < -0) {
+      this.direction = CarinalDirections.north;
+      return;
+    }
+
+    if (this.bot.entity.velocity.x > 0 || this.bot.entity.velocity.x > -0) {
+      this.direction = CarinalDirections.east;
+      return;
+    }
+    if (this.bot.entity.velocity.x < 0 || this.bot.entity.velocity.x < -0) {
+      this.direction = CarinalDirections.west;
+      return;
+    }
+  }
+
+  async testMovement() {
+    const bot = this.bot;
+    const blockUnder = getBlockInFrontUnder();
+    const blockFront = getBlockInFront();
+    const blockEyeHeight = getBlockInFrontEye();
+
+    const blockUnderBack = getBlockBehindUnder();
+    const blockBack = getBlockBehind();
+    const blockEyeHeightBack = getBlockBehindEye();
+
+    const blockUnderRight = getBlockRightUnder();
+    const blockRight = getBlockRight();
+    const blockRightEye = getBlockRightEye();
+
+    const blockUnderLeft = getBlockLeftUnder();
+    const blockLeft = getBlockLeft();
+    const blockLeftEye = getBlockLeftEye();
+
+    //bot.setControlState("forward", true);
+    if (
+      blockUnder &&
+      blockUnderBack &&
+      blockUnderRight &&
+      blockUnderLeft &&
+      shouldJumpAcross(
+        blockUnder,
+        blockUnderBack,
+        blockUnderRight,
+        blockUnderLeft,
+        this.direction
+      )
+    ) {
+      bot.clearControlStates();
+      jumpAcross();
+    } else if (
+      blockFront &&
+      blockBack &&
+      blockRight &&
+      blockLeft &&
+      blockEyeHeight &&
+      blockEyeHeightBack &&
+      blockRightEye &&
+      blockLeftEye &&
+      shouldJumpUp(
+        blockFront,
+        blockBack,
+        blockRight,
+        blockLeft,
+        blockEyeHeight,
+        blockEyeHeightBack,
+        blockRightEye,
+        blockLeftEye,
+        this.direction
+      )
+    ) {
+      bot.clearControlStates();
+      jumpUp();
+      return;
+    }
+
+    if (
+      blockEyeHeight &&
+      blockEyeHeight.name.includes("door") &&
+      this.faceDirectionZ === ZDirections.ZPos
+    ) {
+      await openDooria(blockEyeHeight, ZDirections.ZPos);
+    } else if (
+      blockEyeHeightBack &&
+      blockEyeHeightBack.name.includes("door") &&
+      this.faceDirectionZ === ZDirections.ZNega
+    ) {
+      await openDooria(blockEyeHeightBack, ZDirections.ZNega);
+    }
+
+    function shouldJumpAcross(
+      blockUnder,
+      blockUnderBack,
+      blockUnderRight,
+      blockUnderLeft,
+      direction
+    ) {
+      return (
+        (blockUnder.name.includes("air") &&
+          direction === CarinalDirections.south) ||
+        (blockUnderBack.name.includes("air") &&
+          direction === CarinalDirections.north) ||
+        (blockUnderRight.name.includes("air") &&
+          direction === CarinalDirections.west) ||
+        (blockUnderLeft.name.includes("air") &&
+          direction === CarinalDirections.east)
+      );
+    }
+
+    function shouldJumpUp(
+      blockFront,
+      blockBack,
+      blockRight,
+      blockLeft,
+      blockEyeHeight,
+      blockEyeHeightBack,
+      blockRightEye,
+      blockLeftEye,
+      direction
+    ) {
+      return (
+        (!blockFront.name.includes("air") &&
+          blockEyeHeight.name.includes("air") &&
+          direction === CarinalDirections.south) ||
+        (!blockBack.name.includes("air") &&
+          blockEyeHeightBack.name.includes("air") &&
+          direction === CarinalDirections.north) ||
+        (!blockRight.name.includes("air") &&
+          blockRightEye.name.includes("air") &&
+          direction === CarinalDirections.west) ||
+        (!blockLeft.name.includes("air") &&
+          blockLeftEye.name.includes("air") &&
+          direction === CarinalDirections.east)
+      );
+    }
+
+    //#region getBlocks
+    function getBlockInFront() {
+      const blockPos = bot.entity.position.offset(0, 0, 1);
+      const block = bot.blockAt(blockPos);
+      if (block) {
+        return block;
+      }
+      return null;
+    }
+
+    function getBlockInFrontUnder() {
+      const blockPos = bot.entity.position.offset(0, -1, 1);
+      const block = bot.blockAt(blockPos);
+      if (block) {
+        return block;
+      }
+      return null;
+    }
+
+    function getBlockInFrontEye() {
+      const blockPos = bot.entity.position.offset(0, 1, 1);
+      const block = bot.blockAt(blockPos);
+      if (block) {
+        return block;
+      }
+      return null;
+    }
+
+    function getBlockBehind() {
+      const blockPos = bot.entity.position.offset(0, 0, -1);
+      const block = bot.blockAt(blockPos);
+      if (block) {
+        return block;
+      }
+      return null;
+    }
+
+    function getBlockBehindUnder() {
+      const blockPos = bot.entity.position.offset(0, -1, -1);
+      const block = bot.blockAt(blockPos);
+      if (block) {
+        return block;
+      }
+      return null;
+    }
+
+    function getBlockBehindEye() {
+      const blockPos = bot.entity.position.offset(0, 1, -1);
+      const block = bot.blockAt(blockPos);
+      if (block) {
+        return block;
+      }
+      return null;
+    }
+
+    function getBlockLeft() {
+      const blockPos = bot.entity.position.offset(1, 0, 0);
+      const block = bot.blockAt(blockPos);
+      if (block) {
+        return block;
+      }
+      return null;
+    }
+
+    function getBlockLeftUnder() {
+      const blockPos = bot.entity.position.offset(1, -1, 0);
+      const block = bot.blockAt(blockPos);
+      if (block) {
+        return block;
+      }
+      return null;
+    }
+
+    function getBlockLeftEye() {
+      const blockPos = bot.entity.position.offset(1, 1, 0);
+      const block = bot.blockAt(blockPos);
+      if (block) {
+        return block;
+      }
+      return null;
+    }
+
+    function getBlockRight() {
+      const blockPos = bot.entity.position.offset(-1, 0, 0);
+      const block = bot.blockAt(blockPos);
+      if (block) {
+        return block;
+      }
+      return null;
+    }
+
+    function getBlockRightUnder() {
+      const blockPos = bot.entity.position.offset(-1, -1, 0);
+      const block = bot.blockAt(blockPos);
+      if (block) {
+        return block;
+      }
+      return null;
+    }
+
+    function getBlockRightEye() {
+      const blockPos = bot.entity.position.offset(-1, 1, 0);
+      const block = bot.blockAt(blockPos);
+      if (block) {
+        return block;
+      }
+      return null;
+    }
+
+    //#endregion
+    function jumpAcross() {
+      bot.setControlState("sprint", true);
+      bot.setControlState("forward", true);
+      bot.setControlState("jump", true);
+      setTimeout(() => {
+        bot.setControlState("sprint", false);
+        bot.setControlState("forward", false);
+        bot.setControlState("jump", false);
+      }, 150);
+    }
+
+    function jumpUp() {
+      bot.setControlState("jump", true);
+      bot.setControlState("forward", true);
+      setTimeout(() => {
+        bot.setControlState("forward", false);
+        bot.setControlState("jump", false);
+      }, 250);
+    }
+
+    async function openDooria(door, dir) {
+      if (dir === ZDirections.ZNega) {
+        await bot.activateBlock(door, new Vec3(0, 0, -1));
+      } else if (dir === ZDirections.ZPos) {
+        await bot.activateBlock(door, new Vec3(0, 0, 1));
+      }
+    }
+  }
+
+  async builderMan(mode = "surround") {
+    const blocks = this.bot.inventory
+      .items()
+      .find((i) => i.name.includes("dirt") || i.name.includes("cobblestone"));
+
+    if (mode === "surround") {
+      this.building = true;
+      if (blocks) {
+        await this.bot.equip(blocks, "hand");
+      }
+
+      const forward = this.bot.entity.position.offset(0, -1, -1);
+      const back = this.bot.entity.position.offset(0, -1, 1);
+      const left = this.bot.entity.position.offset(-1, -1, 0);
+      const right = this.bot.entity.position.offset(1, -1, 0);
+
+      for (let i = 0; i < 6; i++) {
+        try {
+          await this.bot.placeBlock(
+            this.bot.blockAt(forward),
+            new Vec3(0, 1, 0)
+          );
+          await sleep(2000);
+          await this.bot.placeBlock(this.bot.blockAt(back), new Vec3(0, 1, 0));
+          await sleep(2000);
+          await this.bot.placeBlock(this.bot.blockAt(left), new Vec3(0, 1, 0));
+          await sleep(2000);
+          await this.bot.placeBlock(this.bot.blockAt(right), new Vec3(0, 1, 0));
+        } catch (error) {
+          this.building = false;
+        }
+      }
+
+      this.building = false;
+    }
+  }
+
   /**
    * W-tapping
    */
-  tap() {
-    const delay = Math.floor(Math.random() * (200 - 160) + 160);
-    if (this.closeToTarg) {
+  tap(mode = "pre") {
+    if (mode === "pre") {
+      if (this.closeToTarg) {
+        this.wtapping = true;
+        this.bot.setControlState("sprint", false);
+        this.isSprinting = false;
+        this.bot.setControlState("sprint", true);
+        this.isSprinting = true;
+        this.wtapping = false;
+      }
+    } else if (mode === "post") {
       this.wtapping = true;
-      this.bot.setControlState("sprint", false);
-      this.isSprinting = false;
-      // setTimeout(() => {
-      this.bot.setControlState("sprint", true);
-      this.isSprinting = true;
-      this.wtapping = false;
-      // }, delay);
+      setTimeout(() => {
+        this.bot.setControlState("sprint", false);
+        this.isSprinting = false;
+        this.bot.setControlState("sprint", true);
+        this.isSprinting = true;
+        this.wtapping = false;
+      }, 150);
     }
   }
 
@@ -717,19 +1155,29 @@ class Fight {
   /**
    * S-tapping
    */
-  stap() {
-    const delay = Math.floor(Math.random() * (200 - 180) + 180);
-    if (this.closeToTarg) {
+  stap(mode = "pre") {
+    if (mode === "pre") {
+      if (this.closeToTarg) {
+        this.stapping = true;
+        this.bot.setControlState("sprint", false);
+        this.bot.setControlState("back", true);
+        this.isSprinting = false;
+        this.bot.setControlState("sprint", true);
+        this.bot.setControlState("back", false);
+        this.isSprinting = true;
+        this.stapping = false;
+      }
+    } else if (mode === "post") {
       this.stapping = true;
-      this.bot.setControlState("sprint", false);
-      this.bot.setControlState("back", true);
-      this.isSprinting = false;
-      // setTimeout(() => {
-      this.bot.setControlState("sprint", true);
-      this.bot.setControlState("back", false);
-      this.isSprinting = true;
-      this.stapping = false;
-      // }, delay);
+      setTimeout(() => {
+        this.bot.setControlState("sprint", false);
+        this.bot.setControlState("back", true);
+        this.isSprinting = false;
+        this.bot.setControlState("sprint", true);
+        this.bot.setControlState("back", false);
+        this.isSprinting = true;
+        this.stapping = false;
+      }, 150);
     }
   }
 
@@ -871,7 +1319,7 @@ class Fight {
   async readyUp(mode = "none") {
     if (mode === "none") {
       this.gettingReady = true;
-      this.bot.chat("/clear");
+      //this.bot.chat("/clear");
       this.bot.chat("/kit claim " + this.kit);
       await sleep(1000);
 
@@ -1287,7 +1735,8 @@ class Fight {
       !this.isHungry &&
       !this.placing &&
       !this.isPearling &&
-      !this.gettingReady
+      !this.gettingReady &&
+      !this.isPathfinding
     ) {
       // If has both weapons choose sword
       if (trident && sword) {
@@ -1415,6 +1864,19 @@ class Fight {
     );
   }
 
+  hasRangedWeapon() {
+    let has = false;
+
+    for (const item of this.bot.inventory.items()) {
+      if (item.name.includes("bow")) {
+        has = true;
+        break;
+      }
+    }
+
+    return has;
+  }
+
   async placeObstacle() {
     if (!this.target_G || !this.target) return;
 
@@ -1443,43 +1905,97 @@ class Fight {
 
     if (!this.placing) {
       this.placing = true;
-      await this.bot.equip(randomItem, "hand");
 
-      if (randomItem.name.includes("flint_and_steel")) {
-        await this.bot.lookAt(near.position.offset(0, -1, 0), true);
-        try {
-          await this.bot.placeBlock(
-            this.bot.blockAt(near.position.offset(0, -1, 0)),
-            new Vec3(0, 1, 0)
-          );
-          this.placing = false;
-        } catch (err) {
-          this.placing = false;
-          this.logError(err);
+      this.bot.clearControlStates();
+
+      await this.bot.equip(randomItem, "hand");
+      if (
+        (near.velocity.x > -0.1 && near.velocity.x < 0.2) ||
+        (near.velocity.z > -0.1 && near.velocity.z < 0.2)
+      ) {
+        if (randomItem.name.includes("flint_and_steel")) {
+          await this.bot.lookAt(near.position.offset(0, -1, 0), true);
+          try {
+            await this.bot.placeBlock(
+              this.bot.blockAt(near.position.offset(0, -1, 0)),
+              new Vec3(0, 1, 0)
+            );
+            this.placing = false;
+          } catch (err) {
+            this.placing = false;
+            this.logError(err);
+          }
+          await sleep(300);
+        } else if (randomItem.name.includes("lava_bucket")) {
+          const previousPos = near.position.clone().offset(0, -1, 0);
+          const currentPos = near.position.offset(0, -1, 0);
+
+          const diff = currentPos.subtract(previousPos).norm();
+
+          if (diff == 0) {
+            const placePos = near.position.offset(0, -1, 0);
+            await this.bot.lookAt(placePos, true);
+            await sleep(100);
+            this.bot.activateItem();
+            await this.bot.lookAt(placePos, true);
+            await sleep(100);
+            this.bot.activateItem();
+            await sleep(300);
+            this.placing = false;
+          }
+        } else if (randomItem.name.includes("cobweb")) {
+          try {
+            await this.bot.placeBlock(
+              this.bot.blockAt(near.position.offset(0, -1, 0)),
+              new Vec3(0, 1, 0)
+            );
+            this.placing = false;
+          } catch (err) {
+            this.placing = false;
+            this.logError(err);
+          }
+          await sleep(300);
         }
-        await sleep(300);
-      } else if (randomItem.name.includes("lava_bucket")) {
-        await this.bot.lookAt(near.position.offset(0, -1, 0), true);
-        await sleep(100);
-        this.bot.activateItem();
-        await sleep(100);
-        this.bot.activateItem();
-        await sleep(300);
+
         this.placing = false;
-      } else if (randomItem.name.includes("cobweb")) {
-        try {
-          await this.bot.placeBlock(
-            this.bot.blockAt(near.position.offset(0, -1, 0)),
-            new Vec3(0, 1, 0)
-          );
+      } else {
+        if (randomItem.name.includes("flint_and_steel")) {
+          await this.bot.lookAt(near.position.offset(0, -1, 0), true);
+          try {
+            await this.bot.placeBlock(
+              this.bot.blockAt(near.position.offset(0, -1, 0)),
+              new Vec3(0, 1, 0)
+            );
+            this.placing = false;
+          } catch (err) {
+            this.placing = false;
+            this.logError(err);
+          }
+          await sleep(300);
+        } else if (randomItem.name.includes("lava_bucket")) {
+          await this.bot.lookAt(near.position.offset(0, -1, 0), true);
+          await sleep(100);
+          this.bot.activateItem();
+          await sleep(100);
+          this.bot.activateItem();
+          await sleep(300);
           this.placing = false;
-        } catch (err) {
-          this.placing = false;
-          this.logError(err);
+        } else if (randomItem.name.includes("cobweb")) {
+          try {
+            await this.bot.placeBlock(
+              this.bot.blockAt(near.position.offset(0, -1, 0)),
+              new Vec3(0, 1, 0)
+            );
+            this.placing = false;
+          } catch (err) {
+            this.placing = false;
+            this.logError(err);
+          }
+          await sleep(300);
         }
-        await sleep(300);
+
+        this.placing = false;
       }
-      this.placing = false;
     }
   }
 
@@ -1502,6 +2018,11 @@ class Fight {
     );
   }
 
+  /**
+   *
+   * @param {String} itemName the item to look for in the bots inventory
+   * @returns Null or the item if found
+   */
   async getItemByName(itemName) {
     const item = this.bot.inventory.items().find((i) => i.name === itemName);
 
@@ -1523,12 +2044,14 @@ class Fight {
 
     if (this.placing) return;
     this.placing = true;
+    let hasPlacedWater = false;
 
     await this.bot.equip(bucket, "hand");
     await this.bot.lookAt(block.position, true);
     await sleep(150);
 
     this.bot.activateItem();
+    hasPlacedWater = true;
     await sleep(450);
     const waterBlock = this.bot.findBlock({
       matching: (b) => b.name === "water",
@@ -1536,10 +2059,11 @@ class Fight {
     });
     const bucketer = await this.getItemByName("bucket");
     await sleep(145);
-    if (waterBlock && bucketer) {
+    if (waterBlock && bucketer && hasPlacedWater) {
       try {
+        this.bot.clearControlStates();
         await this.bot.equip(bucketer, "hand");
-        await this.bot.lookAt(waterBlock.position, true);
+        await this.bot.lookAt(waterBlock.position, true).then();
         await sleep(170);
         this.bot.activateItem(false);
         this.placing = false;
@@ -1548,7 +2072,6 @@ class Fight {
         this.placing = false;
       }
     } else {
-      this.bot.chat("did not find :(");
       this.placing = false;
     }
   }

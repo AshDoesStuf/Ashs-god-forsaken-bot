@@ -11,6 +11,8 @@ socket.on("update", (data) => {
   )}, Y:${data.velocity.y.toFixed(2)}, Z:${data.velocity.z.toFixed(2)}`;
 
   document.getElementById("dist").innerHTML = data.distance
+
+  document.getElementById("direction").innerHTML = data.direction.name;
 });
 
 document.addEventListener("DOMContentLoaded", function () {

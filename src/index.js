@@ -5,7 +5,7 @@ const path = require("path");
 const { argv } = require("node:process");
 
 module.exports = argv;
-const { bot, hitCounter } = require("./bot.js");
+const { bot, hitCounter } = require("./js/bot.js");
 const EventEmitter = require("events");
 
 const app = express();
@@ -74,6 +74,7 @@ bot.once("spawn", async () => {
       position: bot.entity.position,
       velocity: bot.entity.velocity,
       distance: bot.fightBot.distance,
+      direction: bot.fightBot.direction,
     });
 
     // Create an object to hold the settings
@@ -133,6 +134,7 @@ bot.once("spawn", async () => {
         position: bot.entity.position,
         velocity: bot.entity.velocity,
         distance: bot.fightBot.distance,
+        direction: bot.fightBot.direction,
       });
 
       socket.emit("settings-update", bot.fightBot.settings);
@@ -201,3 +203,20 @@ bot.once("spawn", async () => {
     }
   });
 });
+
+/**
+ * @param {RGBot} rgbot
+ */
+function configureBot(rgbot) {
+  // turn on debug logging
+  // logs are displayed within the Regression Games app during a match
+  rgbot.setDebug(true);
+
+  // announce in chat when Bot spawns
+  rgbot.on("spawn", function () {
+    rgbot.chat("Hello World");
+  });
+  
+}
+
+exports.configureBot = configureBot;
