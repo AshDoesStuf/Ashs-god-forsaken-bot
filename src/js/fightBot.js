@@ -7,6 +7,7 @@ const fs = require("fs");
 const speeds = require("../speeds.json");
 const { Vec3 } = require("vec3");
 const mineflayer = require("mineflayer");
+const { Timer } = require("./utils");
 const sleep = async (ms = 2000) => {
   return new Promise((r) => setTimeout(r, ms));
 };
@@ -43,7 +44,7 @@ class Fight {
     };
     this.strafeStyles = {
       default: false,
-      circle: true,
+      circle: false,
     };
     this.combatItems = [778, 149, 680];
     this.knownSexOffenders = [];
@@ -124,6 +125,8 @@ class Fight {
     this.timeElapsed = 0;
     this.currentTime = 0;
     this.startTime = 0;
+
+    this.timer = new Timer();
   }
 
   /**
@@ -139,9 +142,44 @@ class Fight {
         !this.eating &&
         !this.isShooting
       ) {
-        await this.bot.smoothLook.lookAt(player.position.offset(0, 1.6, 0), 1);
+        await this.bot.smoothLook.lookAt(
+          player.position.offset(0, 1.6, 0),
+          0.5
+        );
+
+        // const deltaX = player.position.x - this.bot.entity.position.x;
+        // const deltaY = 1.6;
+        // const deltaZ = player.position.z - this.bot.entity.position.z;
+        // const horizontalDistance = Math.sqrt(deltaX * deltaX + deltaZ * deltaZ);
+
+        // let yaw = Math.atan2(deltaZ, deltaX) * (180 / Math.PI) - 90;
+        // let pitch = -(Math.atan2(deltaY, horizontalDistance) * (180 / Math.PI));
+
+        // pitch = clamp_float(pitch, -90, 90);
+
+        // let prevYaw = this.bot.entity.yaw;
+        // let prevPitch = this.bot.entity.pitch;
+
+        // await this.bot.look(
+        //   interpolate(prevYaw, yaw, 1),
+        //   interpolate(prevPitch, pitch, 1)
+        // );
       }
     };
+
+    function interpolate(prev, next, speed) {
+      let diff = wrapAngleTo180_float(next - prev);
+      return prev + diff / speed;
+    }
+
+    function clamp_float(num, min, max) {
+      return Math.max(min, Math.min(num, max));
+    }
+
+    function wrapAngleTo180_float(angle) {
+      return ((angle + 180) % 360) - 180;
+    }
+
     await look();
   }
 
@@ -292,16 +330,11 @@ class Fight {
 
           if (this.isShooting) {
             this.isShooting = false;
-            this.bot.hawkEye.stop();
           }
 
           const weapon = "bow";
 
           await this.backUp();
-
-          // if (!this.isLookingAtTarget()) {
-          //   return;
-          // }
 
           this.isShooting = true;
           this.bot.clearControlStates();
@@ -349,7 +382,10 @@ class Fight {
                 this.bot.setControlState("back", false);
               }
 
-              this.uppercut();
+              if (Math.random() * 5 > 4) {
+                this.uppercut();
+              }
+
               this.stap("pre");
               this.bot.attack(targetEntity);
               if (this.bot.getControlState("jump")) {
@@ -390,6 +426,29 @@ class Fight {
               this.uppercut();
               this.bot.attack(targetEntity);
               this.stap();
+
+              this.bot.emit("hit");
+            } else if (this.settings.hacker) {
+              if (this.timer.hasTimeElapsed(500, true)) {
+                const randomLocation = targetEntity.position.offset(
+                  Math.floor(Math.random() * (5 - 1) + 1),
+                  0,
+                  Math.floor(Math.random() * (5 - 1) + 1)
+                );
+
+                this.bot._client.write("position", {
+                  x: randomLocation.x,
+                  y: randomLocation.y,
+                  z: randomLocation.z,
+                });
+              }
+
+              this.uppercut();
+              this.stap("pre");
+              this.bot.attack(targetEntity);
+              if (this.bot.getControlState("jump")) {
+                this.bot.setControlState("jump", false);
+              }
 
               this.bot.emit("hit");
             }
@@ -491,6 +550,8 @@ class Fight {
     };
 
     const movementSwitch = async () => {
+      if (this.settings.hacker) return;
+
       if (!this.target || !this.target_G || this.isPathfinding) return;
 
       const distance = this.bot.entity.position.distanceTo(
@@ -535,8 +596,6 @@ class Fight {
           this.bot.setControlState("right", false);
         }
       } else if (this.strafeStyles.circle && this.closeToTarg) {
-        timer++; // increment the timer each time we circle
-
         if (state.jump) {
           this.bot.setControlState("jump", true);
         } else if (timer < maxTime && state.strafeLeft) {
@@ -554,6 +613,8 @@ class Fight {
           this.bot.setControlState("left", false);
           this.bot.setControlState("right", false);
         }
+
+        timer++; // increment the timer each time we circle
       }
     };
 
@@ -715,7 +776,7 @@ class Fight {
   }
 
   async block() {
-    const offHandSlot = this.bot.getEquipmentDestSlot("off-hand");
+    const offHandSlot = this.bot.getEquipmentDestSlot("offhand");
     const slots = this.bot.inventory.slots;
     const shield = this.bot.inventory
       .items()
@@ -1110,12 +1171,13 @@ class Fight {
         this.bot.setControlState("sprint", true);
         this.isSprinting = true;
         this.wtapping = false;
-      }, 150);
+      }, 500);
     }
   }
 
   uppercut() {
     if (this.upperCutting) return;
+
     if (this.closeToTarg && this.isSprinting && this.IsCombat) {
       this.bot.setControlState("jump", true);
       if (Math.random() < 0.5) {
@@ -1127,7 +1189,7 @@ class Fight {
         this.bot.setControlState("jump", false);
         this.bot.setControlState("left", false);
         this.bot.setControlState("right", false);
-      }, 300);
+      }, 500);
     }
   }
 
@@ -1176,7 +1238,7 @@ class Fight {
         this.bot.setControlState("back", false);
         this.isSprinting = true;
         this.stapping = false;
-      }, 150);
+      }, 500);
     }
   }
 

@@ -4,7 +4,9 @@
   "description": "Aimbot go brrrrrr",
   "main": "main.js",
   "scripts": {
-    "devStart": "nodemon main.js beta1.qloxhost.net 25566"
+    "devStart": "nodemon main.js beta1.qloxhost.net 25566",
+    "pika": "node main.js play.pikanetwork.net 25565",
+    "start": "node main.js beta1.qloxhost.net 25566"
   },
   "author": "Ash",
   "license": "ISC",

@@ -11,13 +11,14 @@ const mineflayerViewer = require('prismarine-viewer').mineflayer
 const sleep = async (ms = 2000) => {
   return new Promise((r) => setTimeout(r, ms));
 };
+const {password} = require("./config.json")
 
 const info = require("./main.js");
 const path = require("path");
 
 const bot = mineflayer.createBot({
   host: info[2] || "localhost",
-  username: "Frisk",
+  username: "MajorNsomba",
   mainHand: "left",
   version: "1.18.2",
   port: parseInt(info[3]),
@@ -36,21 +37,23 @@ function loadModules(bot) {
     .map((pluginName) => require(path.join(MODULES_DIRECTORY, pluginName)));
 
   bot.loadPlugins(modules);
+  console.log("loeaded modules", modules.length)
 }
+
 let hitCounter = 0;
 let tempCount = 0;
 bot.bloodhound.yaw_correlation_enabled = true;
 bot.once("spawn", async () => {
   await bot.waitForChunksToLoad();
-  //mineflayerViewer(bot, { port: 5000 })
+  
+  bot.setMaxListeners(100);
   bot.chat("sup sup chicken butt");
 
   bot.fightBot = new Fight(bot);
-  bot.fightBot.settings.aggressive = false;
   loadModules(bot);
 
   bot.on("hit", () => {
-    bot.fightBot.block();
+    // bot.fightBot.block();
 
     hitCounter++;
     if (hitCounter === tempCount + 100 && bot.fightBot.settings.display) {
@@ -127,7 +130,6 @@ bot.once("spawn", async () => {
   bot.on("physicTick", () => {
     bot.fightBot.updateMainHand();
     bot.fightBot.totemEquip();
-    // bot.fightBot.testMovement();
     bot.fightBot.update();
   });
 
@@ -157,6 +159,38 @@ bot.once("spawn", async () => {
     bot.fightBot.calcTicks(bot.fightBot?.debounce);
   });
 });
+
+function login(mode, bool) {
+  if (mode === "reg") {
+    if (bool) {
+      let textToSearch = /Please register with \/register .+ .+$/;
+
+      bot.on("messagestr", (message) => {
+        console.log(message);
+        const match = textToSearch.test(message);
+
+        if (!match) return;
+
+        bot.chat(`/reg ${password} ${password}`);
+        console.log(`${chalk.bold.green("Succesfuly registerd!")}`);
+      });
+    }
+    return;
+  } else if (mode === "log") {
+    if (bool) {
+      let textToSearch = /You must login to continue/;
+      bot.on("messagestr", (message) => {
+        const match = textToSearch.test(message);
+
+        if (!match) return;
+
+        bot.chat(`/login ${password}`);
+        console.log(`${chalk.bold.green("Succesfuly loged in!")}`);
+      });
+    }
+    return;
+  }
+}
 
 bot.on("error", (err) => {
   console.log(`${chalk.bgRed(err.name)}: ${chalk.redBright(err.message)}`);

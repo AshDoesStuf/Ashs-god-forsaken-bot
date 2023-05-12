@@ -3,6 +3,7 @@ const http = require("http");
 const socketIO = require("socket.io");
 const path = require("path");
 const { argv } = require("node:process");
+const { password } = require("./config.json");
 
 module.exports = argv;
 const { bot, hitCounter } = require("./bot.js");
@@ -51,10 +52,8 @@ server.listen(port, () => {
 
 bot.once("spawn", async () => {
   await bot.waitForChunksToLoad();
-  console.log("bot spawned");
 
-  bot.setMaxListeners(100);
-  EventEmitter.setMaxListeners(100);
+  console.log("bot spawned");
   io.on("connection", (socket) => {
     socket.on("chat message", (message) => {
       bot.chat(message);
@@ -204,19 +203,34 @@ bot.once("spawn", async () => {
   });
 });
 
-// /**
-//  * @param {RGBot} rgbot
-//  */
-// function configureBot(rgbot) {
-//   // turn on debug logging
-//   // logs are displayed within the Regression Games app during a match
-//   rgbot.setDebug(true);
+async function login(mode, bool) {
+  await bot.waitForTicks(100);
+  if (mode === "reg") {
+    if (bool) {
+      let textToSearch = /Please register with \/register .+ .+$/;
 
-//   // announce in chat when Bot spawns
-//   rgbot.on("spawn", function () {
-//     rgbot.chat("Hello World");
-//   });
+      bot.on("messagestr", (message) => {
+        console.log(message);
+        const match = textToSearch.test(message);
 
-// }
+        if (!match) return;
 
-// exports.configureBot = configureBot;
+        bot.chat(`/reg ${password} ${password}`);
+        console.log(`${chalk.bold.green("Succesfuly registerd!")}`);
+      });
+    }
+    return;
+  } else if (mode === "log") {
+    let textToSearch = /Please login with \/login <password>/;
+    bot.on("messagestr", (message) => {
+      console.log(message);
+      const match = textToSearch.test(message);
+
+      if (!match) return;
+
+      bot.chat(`/login ${password}`);
+      console.log(`${chalk.bold.green("Succesfuly loged in!")}`);
+    });
+
+  }
+}
