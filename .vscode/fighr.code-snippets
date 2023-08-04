@@ -1,0 +1,16 @@
+{
+  "module": {
+    "prefix": "m",
+    "body": [
+      "/**",
+      " * ",
+      " * @type {import(\"../index.d.ts\").FightModule}",
+      " */",
+      "module.exports = (bot) => {",
+      "  ",
+      "};",
+      "  "
+    ],
+    "description": "module"
+  }
+}

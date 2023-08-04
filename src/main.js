@@ -3,11 +3,10 @@ const http = require("http");
 const socketIO = require("socket.io");
 const path = require("path");
 const { argv } = require("node:process");
-const { password } = require("./config.json");
 
 module.exports = argv;
 const { bot, hitCounter } = require("./bot.js");
-const EventEmitter = require("events");
+const { hasHealthPotions } = require("./js/utils");
 
 const app = express();
 const server = http.createServer(app);
@@ -15,6 +14,7 @@ const io = socketIO(server);
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
+
 app.use(express.static(path.join(__dirname, "public")));
 app.use(
   express.static(path.join(__dirname, "public"), {
@@ -27,27 +27,13 @@ app.use(
 );
 
 const port = 3000;
-let data = {};
 
 app.get("/", (req, res) => {
-  res.render("index", { bot });
+  res.render("index");
 });
 
 app.get("/chat", (req, res) => {
-  res.render("chat", { data });
-});
-
-app.get("/greet", (req, res) => {
-  res.sendFile(__dirname + "/public/greet.html");
-});
-
-app.get("/botView", (req, res) => {
-  const block = bot.blockAt(bot.entity.position.offset(1, 0, 0));
-  res.render("botView", { block });
-});
-
-server.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+  res.render("chat");
 });
 
 bot.once("spawn", async () => {
@@ -73,7 +59,6 @@ bot.once("spawn", async () => {
       position: bot.entity.position,
       velocity: bot.entity.velocity,
       distance: bot.fightBot.distance,
-      direction: bot.fightBot.direction,
     });
 
     // Create an object to hold the settings
@@ -102,7 +87,7 @@ bot.once("spawn", async () => {
       pearling: bot.fightBot?.isPearling,
       hungry: bot.fightBot?.isHungry,
       pathing: bot.fightBot?.isPathfinding,
-      hasHealthPotions: bot.fightBot?.hasHealthPotions(),
+      hasHealthPotions: hasHealthPotions(bot),
       lookingAt: bot.fightBot?.isLookingAtTarget(),
       placing: bot.fightBot?.placing,
       blocking: bot.fightBot.blocking,
@@ -117,6 +102,9 @@ bot.once("spawn", async () => {
       heldItemDurability: getDurability(),
       offenders: getKnownOffenders(),
       currentTarget: bot.fightBot?.target ? bot.fightBot?.target : "no one",
+      currentTargetEntity: bot.fightBot.target_G
+        ? bot.fightBot?.target_G?.username
+        : "no one",
       offhandPrio: bot.fightBot.offHandPriority,
       moving: bot.fightBot.isMoving(),
       uppercutting: bot.fightBot.upperCutting,
@@ -133,7 +121,6 @@ bot.once("spawn", async () => {
         position: bot.entity.position,
         velocity: bot.entity.velocity,
         distance: bot.fightBot.distance,
-        direction: bot.fightBot.direction,
       });
 
       socket.emit("settings-update", bot.fightBot.settings);
@@ -152,16 +139,14 @@ bot.once("spawn", async () => {
         pearling: bot.fightBot?.isPearling,
         hungry: bot.fightBot?.isHungry,
         pathing: bot.fightBot?.isPathfinding,
-        hasHealthPotions: bot.fightBot?.hasHealthPotions(),
+        hasHealthPotions: hasHealthPotions(bot),
         lookingAt: bot.fightBot?.isLookingAtTarget(),
         placing: bot.fightBot?.placing,
         blocking: bot.fightBot.blocking,
         hits: hitCounter,
         lastFightTime: {
           seconds: Math.floor(bot.fightBot?.currentTime / 1000),
-          minutes: (Math.floor(bot.fightBot?.currentTime / 1000) / 60).toFixed(
-            2
-          ),
+          minutes: (Math.floor(bot.fightBot?.currentTime / 1000) / 60).toFixed(2),
         },
         timeSinceStart: Math.floor(bot.fightBot?.timeElapsed / 1000),
         activeEffects:
@@ -169,6 +154,9 @@ bot.once("spawn", async () => {
         heldItemDurability: getDurability(),
         offenders: getKnownOffenders(),
         currentTarget: bot.fightBot?.target ? bot.fightBot?.target : "no one",
+        currentTargetEntity: bot.fightBot.target_G
+          ? bot.fightBot?.target_G?.username
+          : "no one",
         offhandPrio: bot.fightBot.offHandPriority,
         moving: bot.fightBot.isMoving(),
         uppercutting: bot.fightBot.upperCutting,
@@ -203,34 +191,6 @@ bot.once("spawn", async () => {
   });
 });
 
-async function login(mode, bool) {
-  await bot.waitForTicks(100);
-  if (mode === "reg") {
-    if (bool) {
-      let textToSearch = /Please register with \/register .+ .+$/;
-
-      bot.on("messagestr", (message) => {
-        console.log(message);
-        const match = textToSearch.test(message);
-
-        if (!match) return;
-
-        bot.chat(`/reg ${password} ${password}`);
-        console.log(`${chalk.bold.green("Succesfuly registerd!")}`);
-      });
-    }
-    return;
-  } else if (mode === "log") {
-    let textToSearch = /Please login with \/login <password>/;
-    bot.on("messagestr", (message) => {
-      console.log(message);
-      const match = textToSearch.test(message);
-
-      if (!match) return;
-
-      bot.chat(`/login ${password}`);
-      console.log(`${chalk.bold.green("Succesfuly loged in!")}`);
-    });
-
-  }
-}
+server.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});

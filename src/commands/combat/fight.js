@@ -1,17 +1,16 @@
 // commands/fight.js
 
+const { bestPlayerFilter } = require("../../js/utils");
+
 /**
  * @type {import("../../index").Command}
  */
 module.exports = {
   name: "fight",
   execute(bot, username, args) {
-    const localPlayer = args[1] || username;
-    if (
-      bot.fightBot.knownSexOffenders.length >= 1 &&
-      bot.fightBot.settings.freeForAll
-    ) {
-      localPlayer = bot.fightBot.knownSexOffenders[0];
+    let localPlayer = args[0] || username;
+    if (bot.fightBot.settings.freeForAll) {
+      localPlayer = bot.nearestEntity(bestPlayerFilter).username;
     }
 
     if (bot.fightBot.IsCombat) {

@@ -1,12 +1,13 @@
 {
   "name": "archer",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Aimbot go brrrrrr",
   "main": "main.js",
   "scripts": {
     "devStart": "nodemon main.js beta1.qloxhost.net 25566",
     "pika": "node main.js play.pikanetwork.net 25565",
-    "start": "node main.js beta1.qloxhost.net 25566"
+    "start": "node main.js NubPlayzBoi.aternos.me 26216",
+    "startChara": "node ./js/chara.js NubPlayzBoi.aternos.me 26216"
   },
   "author": "Ash",
   "license": "ISC",
@@ -21,15 +22,17 @@
     "minecraft-data": "^3.26.0",
     "minecrafthawkeye": "^1.2.11",
     "mineflayer": "^4.8.0",
+    "mineflayer-armor-manager": "^1.4.2",
     "mineflayer-bloodhound": "^0.0.2",
     "mineflayer-collectblock": "^1.4.1",
-    "mineflayer-movement": "^0.2.1",
+    "mineflayer-movement": "^0.4.4",
     "mineflayer-pathfinder": "^2.4.2",
     "prismarine-viewer": "^1.23.0",
     "rg-bot": "^1.10.0",
     "rg-ctf-utils": "^1.0.5",
     "socket.io": "^4.6.0",
-    "strip-indent": "^3.0.0"
+    "strip-indent": "^3.0.0",
+    "ws": "^8.13.0"
   },
   "devDependencies": {
     "@types/collections": "^5.1.2",

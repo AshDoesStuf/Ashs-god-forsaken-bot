@@ -7,6 +7,8 @@ const { loader } = require("@nxg-org/mineflayer-smooth-look");
 const minecraftHawkEye = require("minecrafthawkeye");
 const Fight = require("./fightBot.js");
 const pathfinder = require("mineflayer-pathfinder").pathfinder;
+const movement = require("mineflayer-movement");
+const WebSocket = require("ws");
 
 const bot = mineflayer.createBot({
   host: argv[2],
@@ -16,9 +18,23 @@ const bot = mineflayer.createBot({
   mainHand: "left",
 });
 
+const ws = new WebSocket("ws://localhost:8080");
+
+ws.on("open", () => {
+  console.log(`Bot Chara connected to the WebSocket backend`);
+});
+
+ws.on("message", (message) => {
+  console.log(
+    `Bot Chara received message from WebSocket backend:`,
+    message.toString("utf-8")
+  );
+});
+
 bot.loadPlugin(pathfinder);
 bot.loadPlugin(minecraftHawkEye);
 bot.loadPlugin(loader);
+bot.loadPlugin(movement.plugin);
 bloodhoundPlugin(bot);
 
 bot.bloodhound.yaw_correlation_enabled = true;
@@ -28,7 +44,19 @@ bot.once("spawn", async () => {
 
   bot.chat("Heyyy =)");
 
+  ws.send(`Bot ${bot.username} connected to ${bot._client.socket._host}`);
+
   bot.fightBot = new Fight(bot);
+
+  bot.on("physicsTick", () => {
+    if (
+      bot.health <= 8 &&
+      bot.fightBot.settings.requestHelp &&
+      bot.fightBot.IsCombat
+    ) {
+      bot.fightBot.requestHelp(ws);
+    }
+  });
 
   bot.on("death", async () => {
     stop();
@@ -42,7 +70,7 @@ bot.once("spawn", async () => {
     const args = m.split(" ");
 
     if (args[0] === "c!fight") {
-      const localPlayer = args[1] || username;
+      const localPlayer = args[1] || u;
       if (
         bot.fightBot.knownSexOffenders.length >= 1 &&
         bot.fightBot.settings.freeForAll
@@ -118,7 +146,6 @@ bot.once("spawn", async () => {
   bot.on("physicTick", () => {
     bot.fightBot.updateMainHand();
     bot.fightBot.totemEquip();
-    bot.fightBot.testMovement();
     bot.fightBot.update();
   });
 

@@ -10,13 +10,11 @@ socket.on("update", (data) => {
     2
   )}, Y:${data.velocity.y.toFixed(2)}, Z:${data.velocity.z.toFixed(2)}`;
 
-  document.getElementById("dist").innerHTML = data.distance
-
-  document.getElementById("direction").innerHTML = data.direction.name;
+  document.getElementById("dist").innerHTML = data.distance;
 });
 
 document.addEventListener("DOMContentLoaded", function () {
-  const settingsContainer = document.querySelector(".bot-settings");
+  const settingsContainer = document.querySelector(".settings");
   const settingElements = {};
 
   socket.on("settings-update", (settings) => {
@@ -64,6 +62,7 @@ socket.on("main-update", (data) => {
     data.heldItemDurability;
   document.getElementById("offenders").innerHTML = data.offenders;
   document.getElementById("current-target").innerHTML = data.currentTarget;
+  document.getElementById("current-target-entity").innerHTML = data.currentTargetEntity;
   document.getElementById("offhand-prio").innerHTML = data.offhandPrio;
   document.getElementById("moving").innerHTML = data.moving;
   document.getElementById("uppercutting").innerHTML = data.uppercutting;

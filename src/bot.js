@@ -6,19 +6,21 @@ const chalk = require("chalk");
 const fs = require("fs");
 const bloodhoundPlugin = require("mineflayer-bloodhound")(mineflayer);
 const { loader } = require("@nxg-org/mineflayer-smooth-look");
+const movement = require("mineflayer-movement").plugin;
 const minecraftHawkEye = require("minecrafthawkeye");
-const mineflayerViewer = require('prismarine-viewer').mineflayer
+const WebSocket = require("ws");
+
 const sleep = async (ms = 2000) => {
   return new Promise((r) => setTimeout(r, ms));
 };
-const {password} = require("./config.json")
 
 const info = require("./main.js");
 const path = require("path");
+const { bestPlayerFilter, getClosestPlayer } = require("./js/utils.js");
 
 const bot = mineflayer.createBot({
   host: info[2] || "localhost",
-  username: "MajorNsomba",
+  username: "Frisk",
   mainHand: "left",
   version: "1.18.2",
   port: parseInt(info[3]),
@@ -27,6 +29,7 @@ const bot = mineflayer.createBot({
 bot.loadPlugin(pathfinder);
 bot.loadPlugin(minecraftHawkEye);
 bot.loadPlugin(loader);
+bot.loadPlugin(movement);
 bloodhoundPlugin(bot);
 
 function loadModules(bot) {
@@ -37,20 +40,51 @@ function loadModules(bot) {
     .map((pluginName) => require(path.join(MODULES_DIRECTORY, pluginName)));
 
   bot.loadPlugins(modules);
-  console.log("loeaded modules", modules.length)
+  console.log("loeaded modules", modules.length);
 }
 
 let hitCounter = 0;
 let tempCount = 0;
 bot.bloodhound.yaw_correlation_enabled = true;
+
+const ws = new WebSocket("ws://localhost:8080");
+
+ws.on("open", () => {
+  console.log(`Bot Frisk connected to the WebSocket backend`);
+});
+
+ws.on("message", (message) => {
+  console.log(
+    `Bot Frisk received message from WebSocket backend:`,
+    message.toString("utf-8")
+  );
+});
+
 bot.once("spawn", async () => {
   await bot.waitForChunksToLoad();
-  
+
   bot.setMaxListeners(100);
   bot.chat("sup sup chicken butt");
 
+  ws.send(`Bot ${bot.username} connected to ${bot._client.socket._host}`);
+
   bot.fightBot = new Fight(bot);
+  bot.commands = [];
+  bot.followTarget = null;
+
+  const { Default } = bot.movement.goals;
+  bot.movement.setGoal(Default);
   loadModules(bot);
+
+  bot.on("physicsTick", () => {
+    if (
+      bot.health <= 8 &&
+      bot.fightBot.settings.requestHelp &&
+      bot.fightBot.IsCombat
+    ) {
+      bot.fightBot.requestHelp(ws);
+    }
+  });
 
   bot.on("hit", () => {
     // bot.fightBot.block();
@@ -61,7 +95,6 @@ bot.once("spawn", async () => {
       tempCount = hitCounter;
     }
   });
-
 
   bot.on("fight-stop", () => {
     if (hitCounter !== 0 && bot.fightBot.settings.display) {
@@ -95,6 +128,22 @@ bot.once("spawn", async () => {
         await bot.equip(healthPot, "hand");
         bot.activateItem(false);
       }
+
+      if (bot.fightBot.settings.freeForAll) {
+        const sa = bot.nearestEntity(
+          (e) =>
+            e.type === "player" &&
+            e.isValid &&
+            e.position.distanceTo(bot.entity.position) < this.maxFollowDistance &&
+            e?.health > 0 // Check if the player is alive
+        );
+    
+
+        if (sa) {
+          bot.fightBot.setTarget(sa.username);
+        }
+        bot.fightBot.attack();
+      }
     }
   });
 
@@ -113,6 +162,22 @@ bot.once("spawn", async () => {
         await bot.equip(healthPot);
         bot.activateItem(false);
       }
+
+      if (bot.fightBot.settings.freeForAll && !bot.fightBot.IsCombat) {
+        const sa = bot.nearestEntity(
+          (e) =>
+            e.type === "player" &&
+            e.isValid &&
+            e.position.distanceTo(bot.entity.position) < this.maxFollowDistance &&
+            e?.health > 0 // Check if the player is alive
+        );
+    
+
+        if (sa) {
+          bot.fightBot.setTarget(sa.username);
+        }
+        bot.fightBot.attack();
+      }
     }
   });
 
@@ -127,68 +192,33 @@ bot.once("spawn", async () => {
     }
   });
 
-  bot.on("physicTick", () => {
-    bot.fightBot.updateMainHand();
-    bot.fightBot.totemEquip();
-    bot.fightBot.update();
-  });
-
   function stop() {
     bot.fightBot.stop();
     bot.clearControlStates();
   }
-
-  setInterval(async () => {
-    bot.fightBot.lookPlayer();
-    bot.fightBot.followMob();
-    bot.fightBot.setPriority();
-    bot.fightBot.calculateDistance();
-    bot.fightBot.releve();
-    if (bot.heldItem) {
-      bot.fightBot.debounce = bot.fightBot.changeDebounce(bot?.heldItem);
-    } else if (!bot?.heldItem) {
-      bot.fightBot.debounce = bot.fightBot.changeDebounce();
-    }
-
-    bot.fightBot.attempHeal();
-
-    if (!bot.usingHeldItem) {
-      bot.fightBot.runAndEatGap();
-    }
-
-    bot.fightBot.calcTicks(bot.fightBot?.debounce);
-  });
 });
 
-function login(mode, bool) {
-  if (mode === "reg") {
-    if (bool) {
-      let textToSearch = /Please register with \/register .+ .+$/;
+function findGoodTarget() {
+  bot.fightBot.stop();
+  const newTarget = getClosestPlayer(bot);
 
-      bot.on("messagestr", (message) => {
-        console.log(message);
-        const match = textToSearch.test(message);
+  if (newTarget.entity?.health <= 0) {
+    return findGoodTarget();
+  }
 
-        if (!match) return;
+  if (newTarget.gamemode === 1) {
+    return findGoodTarget();
+  }
 
-        bot.chat(`/reg ${password} ${password}`);
-        console.log(`${chalk.bold.green("Succesfuly registerd!")}`);
-      });
-    }
-    return;
-  } else if (mode === "log") {
-    if (bool) {
-      let textToSearch = /You must login to continue/;
-      bot.on("messagestr", (message) => {
-        const match = textToSearch.test(message);
+  if (!newTarget.entity) {
+    return findGoodTarget();
+  }
 
-        if (!match) return;
-
-        bot.chat(`/login ${password}`);
-        console.log(`${chalk.bold.green("Succesfuly loged in!")}`);
-      });
-    }
-    return;
+  if (newTarget && newTarget.entity) {
+    bot.fightBot.clear();
+    bot.fightBot.readyUp();
+    bot.fightBot.setTarget(newTarget.username);
+    bot.fightBot.attack();
   }
 }
 

@@ -1,9 +1,9 @@
-[5/8/2023, 6:05:29 PM] Message: No block has been placed : the block is still cobweb
-Stack Trace: Error: No block has been placed : the block is still cobweb
-    at placeBlockWithOptions (C:\Users\ashpl\Archer\src\node_modules\mineflayer\lib\plugins\place_block.js:17:13)
+[6/20/2023, 8:38:32 PM] Message: Server rejected transaction for clicking on slot 14, on window with id 0.
+Stack Trace: Error: Server rejected transaction for clicking on slot 14, on window with id 0.
+    at clickWindow (C:\Users\ashpl\Archer\src\node_modules\mineflayer\lib\plugins\inventory.js:549:15)
     at runMicrotasks (<anonymous>)
     at processTicksAndRejections (node:internal/process/task_queues:96:5)
-    at async EventEmitter.placeBlock (C:\Users\ashpl\Archer\src\node_modules\mineflayer\lib\plugins\place_block.js:24:5)
-    at async Fight.placeObstacle (C:\Users\ashpl\Archer\src\js\fightBot.js:2003:13)
-    at async attk (C:\Users\ashpl\Archer\src\js\fightBot.js:378:17)
-    at async Timeout.loop [as _onTimeout] (C:\Users\ashpl\Archer\src\js\fightBot.js:655:7)
+    at async EventEmitter.moveSlotItem (C:\Users\ashpl\Archer\src\node_modules\mineflayer\lib\plugins\inventory.js:573:7)
+    at async EventEmitter.equip (C:\Users\ashpl\Archer\src\node_modules\mineflayer\lib\plugins\simple_inventory.js:125:5)
+    at async Fight.attempHeal (C:\Users\ashpl\Archer\src\js\fightBot.js:1347:9)
+    at async EventEmitter.<anonymous> (C:\Users\ashpl\Archer\src\bot.js:157:7)

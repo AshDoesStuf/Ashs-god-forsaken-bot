@@ -1,72 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <script src="/socket.io/socket.io.js"></script>
     <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Frisk dashboard</title>
-    <link rel="stylesheet" type="text/css" href="/style.css" />
+    <link rel="stylesheet" type="text/css" href="css/style.css" />
+    <title>Frisk Dashboard</title>
   </head>
   <body>
-    <div class="bot-info">
-      <h1>Bot Info</h1>
-      <!-- <p>Health: <span id="health"></span></p>
-      <p>Food: <span id="food"></span></p>
-      <p>Position: <span id="pos"></span></p>
-      <p>Velocity: <span id="vel"></span></p>
-      <p>Distance: <span id="dist"></span></p>
-      <p>Direction: <span id="direction"></span></p> -->
+    <!-- 
+    <div class="main-info">
+      <h1>Main</h1>
+
+    </div> -->
+
+    <div class="main">
+      <h1>General</h1>
       <ul>
         <li>Health: <span id="health"></span></li>
         <li>Food: <span id="food"></span></li>
         <li>Position: <span id="pos"></span></li>
         <li>Velocity: <span id="vel"></span></li>
         <li>Distance: <span id="dist"></span></li>
-        <li>Direction: <span id="direction"></span></li>
       </ul>
-    </div>
 
-    <div class="bot-settings">
       <h1>Settings</h1>
+      <div class="settings"></div>
+
+      <h1>Other</h1>
+      <p>Eating: <span id="eating"></span></p>
+      <p>Sprinting: <span id="sprinting"></span></p>
+      <p>Close: <span id="close"></span></p>
+      <p>Time to reach: <span id="time-to-reach"></span></p>
+      <p>Reach: <span id="reach"></span></p>
+      <p>Shooting: <span id="shooting"></span></p>
+      <p>Combat: <span id="combat"></span></p>
+      <p>Pve: <span id="pve"></span></p>
+      <p>Debounce: <span id="debounce"></span></p>
+      <p>Current cooldown: <span id="current-cooldown"></span></p>
+      <p>Pearling: <span id="pearling"></span></p>
+      <p>Hungry: <span id="hungry"></span></p>
+      <p>Pathing: <span id="pathing"></span></p>
+      <p>Has health pots: <span id="has-health-pots"></span></p>
+      <p>Looking at: <span id="looking-at"></span></p>
+      <p>Placing: <span id="placing"></span></p>
+      <p>Blocking: <span id="blocking"></span></p>
+      <p>Hits: <span id="hits"></span></p>
+      <p>Last fight time: <span id="last-fight-time"></span></p>
+      <p>Time since start: <span id="time-since-start"></span></p>
+      <p>Active effects: <span id="active-effects"></span></p>
+      <p>Held item durability: <span id="held-item-durability"></span></p>
+      <p>Offenders: <span id="offenders"></span></p>
+      <p>Current target: <span id="current-target"></span></p>
+      <p>Current target entity: <span id="current-target-entity"></span></p>
+      <p>Offhand prio: <span id="offhand-prio"></span></p>
+      <p>Moving: <span id="moving"></span></p>
+      <p>Uppercutting: <span id="uppercutting"></span></p>
+      <p>Exploring: <span id="exploring"></span></p>
+      <p>Getting ready: <span id="ready"></span></p>
+      <p>Healing: <span id="healing"></span></p>
     </div>
 
-    <div class="main-info">
-      <h1>Main</h1>
-      <p>Eating:<span id="eating"></span></p>
-      <p>Sprinting:<span id="sprinting"></span></p>
-      <p>Close:<span id="close"></span></p>
-      <p>Time to reach:<span id="time-to-reach"></span></p>
-      <p>Reach:<span id="reach"></span></p>
-      <p>Shooting:<span id="shooting"></span></p>
-      <p>Combat:<span id="combat"></span></p>
-      <p>Pve:<span id="pve"></span></p>
-      <p>Debounce:<span id="debounce"></span></p>
-      <p>Current cooldown:<span id="current-cooldown"></span></p>
-      <p>Pearling:<span id="pearling"></span></p>
-      <p>Hungry:<span id="hungry"></span></p>
-      <p>Pathing:<span id="pathing"></span></p>
-      <p>Has health pots:<span id="has-health-pots"></span></p>
-      <p>Looking at:<span id="looking-at"></span></p>
-      <p>Placing:<span id="placing"></span></p>
-      <p>Blocking:<span id="blocking"></span></p>
-      <p>Hits:<span id="hits"></span></p>
-      <p>Last fight time:<span id="last-fight-time"></span></p>
-      <p>Time since start:<span id="time-since-start"></span></p>
-      <p>Active effects:<span id="active-effects"></span></p>
-      <p>Held item durability:<span id="held-item-durability"></span></p>
-      <p>Offenders:<span id="offenders"></span></p>
-      <p>Current target:<span id="current-target"></span></p>
-      <p>Offhand prio:<span id="offhand-prio"></span></p>
-      <p>Moving:<span id="moving"></span></p>
-      <p>Uppercutting:<span id="uppercutting"></span></p>
-      <p>Exploring:<span id="exploring"></span></p>
-      <p>Gettin ready:<span id="ready"></span></p>
-      <p>Healing:<span id="healing"></span></p>
-    </div>
-
-    <div class="console"></div>
-
-    <script src="/main.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/main.js"></script>
   </body>
 </html>

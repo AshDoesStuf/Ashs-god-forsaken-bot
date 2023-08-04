@@ -1,46 +1,33 @@
-const mineflayer = require("mineflayer");
-const mineflayerViewer = require("prismarine-viewer").mineflayer;
+const { Worker, isMainThread } = require("worker_threads");
+const createBot = require("./mineflayerBot.js");
 
-const { pathfinder, Movements } = require("mineflayer-pathfinder");
-const { GoalBlock } = require("mineflayer-pathfinder").goals;
+if (isMainThread) {
+  // Number of bots you want to create
+  const numBots = 4;
 
-const bot = mineflayer.createBot({
-  username: "Chara",
-  host: "free2.ger.idley.net",
-  port: 25594,
-  version: "1.18.1",
-});
+  const botInfo = [
+    { username: "bot1", host: "NubPlayzBoi.aternos.me", port: 26216 },
+    // Add more bot information here for each bot
+  ];
 
-bot.loadPlugin(pathfinder);
+  // Create a worker thread for each bot
+  for (let i = 0; i < numBots; i++) {
+    const worker = new Worker(__filename);
 
-bot.once("spawn", () => {
-  mineflayerViewer(bot, { port: 3000 });
+    worker.on("message", (message) => {
+      console.log(`Bot ${message.username} says: ${message.message}`);
+    });
 
-  bot.on("path_update", (r) => {
-    const nodesPerTick = ((r.visitedNodes * 50) / r.time).toFixed(2);
-    console.log(
-      `I can get there in ${
-        r.path.length
-      } moves. Computation took ${r.time.toFixed(
-        2
-      )} ms (${nodesPerTick} nodes/tick). ${r.status}`
-    );
-    const path = [bot.entity.position.offset(0, 0.5, 0)];
-    for (const node of r.path) {
-      path.push({ x: node.x, y: node.y + 0.5, z: node.z });
-    }
-    bot.viewer.drawLine("path", path, 0xff00ff);
+    worker.postMessage(botInfo[i]);
+  }
+} else {
+  // Inside the worker thread
+  const botData = require("worker_threads").workerData;
+  const bot = createBot(botData.username, botData.host, botData.port);
+
+  // Your bot-specific logic here
+  bot.on("message", (message) => {
+    // Example: Send a message from the bot
+    bot.chat(`Hello, I am ${bot.username}. I am a bot!`);
   });
-
-  const mcData = require("minecraft-data")(bot.version);
-  const defaultMove = new Movements(bot, mcData);
-
-  bot.viewer.on("blockClicked", (block, face, button) => {
-    if (button !== 2) return; // only right click
-
-    const p = block.position.offset(0, 1, 0);
-
-    bot.pathfinder.setMovements(defaultMove);
-    bot.pathfinder.setGoal(new GoalBlock(p.x, p.y, p.z));
-  });
-});
+}

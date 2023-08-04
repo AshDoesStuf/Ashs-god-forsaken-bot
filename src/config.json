@@ -1,5 +1,12 @@
 {
-    "password": "Itsyaboi1",
-    "master": ["AshWillFindU", "FrostifyZX", "LinkDiscord", "MajorGalu"],
-    "prefix": "f!"
+  "password": "Itsyaboi1",
+  "master": [
+    "AshWillFindU",
+    "FrostifyZX",
+    "LinkDiscord",
+    "MajorGalu",
+    "AshLikesFood",
+    "BeveledCube"
+  ],
+  "prefix": "f!"
 }

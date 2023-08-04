@@ -41,7 +41,15 @@ module.exports = (bot) => {
       } else if (kit === "AxeUhc") {
         setTimeout(() => {
           getReady("uhc", username);
-        },2000)
+        }, 2000);
+      } else if (kit === "neth1") {
+        setTimeout(() => {
+          getReady("Neth", username);
+        }, 2000);
+      } else {
+        setTimeout(() => {
+          getReady("Neth", username);
+        }, 2000);
       }
     }
 
@@ -82,6 +90,11 @@ module.exports = (bot) => {
       bot.fightBot.clear();
       await bot.fightBot.setTarget(username);
       await bot.fightBot.attack();
+    } else {
+      bot.chat("accepted!");
+      bot.fightBot.clear();
+      await bot.fightBot.setTarget(username);
+      await bot.fightBot.attack();    
     }
   }
 };
