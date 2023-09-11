@@ -66,7 +66,12 @@ bot.once("spawn", async () => {
   bot.setMaxListeners(100);
   bot.chat("sup sup chicken butt");
 
-  ws.send(`Bot ${bot.username} connected to ${bot._client.socket._host}`);
+  const spawnData = {
+    message: `Bot ${bot.username} connected to ${bot._client.socket._host}`
+  }
+  const spawnDataString = JSON.stringify(spawnData)
+
+  ws.send(spawnDataString);
 
   bot.fightBot = new Fight(bot);
   bot.commands = [];

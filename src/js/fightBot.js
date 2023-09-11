@@ -229,7 +229,7 @@ class Fight {
         this.bot.setControlState("sprint", true);
         this.bot.setControlState("forward", true);
       } else {
-        if (this.wtapping || this.ashtapping || this.stapping) return;
+        if (this.wtapping && this.ashtapping && this.stapping) return;
 
         // Stop moving if too close
         this.bot.setControlState("forward", false);
@@ -346,8 +346,6 @@ class Fight {
       const targetEntity = this.target_G;
       if (
         targetEntity &&
-        targetEntity.isValid &&
-        targetEntity.health > 0 &&
         !this.eating &&
         !this.isHungry &&
         !this.placing &&
@@ -1260,7 +1258,10 @@ class Fight {
   }
 
   requestHelp(ws) {
-    const data = { target: this.target_G };
+    const data = {
+      message: `${this.bot.username} needs help!`,
+      target: this.target_G,
+    };
     const jsonString = JSON.stringify(data);
     ws.send(jsonString);
   }
@@ -1467,15 +1468,11 @@ class Fight {
 
       // if (hasRegeneration) return;
 
-      if (this.timeSinceLastChug > 40) return;
-
       if (!gap) return;
 
-      if (!this.IsCombat) return;
+      // if (!this.IsCombat) return;
 
-      if (this.eating) {
-        return;
-      }
+      if (this.eating) return;
 
       this.eating = true;
 
@@ -1524,8 +1521,6 @@ class Fight {
         this.eating = false;
         await sleep(1000);
       }
-
-      this.eating = false;
     };
 
     const autoEat = async () => {
@@ -1741,7 +1736,7 @@ class Fight {
   }
 
   calcTicks(seconds) {
-    return (this.currentCooldown = Math.floor((1 / seconds) * 1000));
+    return (this.currentCooldown = Math.floor((1 / seconds) * 1000) - 0.5);
   }
 
   getInv() {
@@ -1903,6 +1898,10 @@ class Fight {
         e.username === this.target_G.username
     );
     if (!near) return;
+
+    const blockUnderNear = this.bot.blockAt(near.position);
+
+    if (blockUnderNear && blockUnderNear.name === "cobweb") return;
 
     const randomItem = items[Math.floor(Math.random() * items.length)];
 
