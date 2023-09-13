@@ -54,10 +54,9 @@ ws.on("open", () => {
 });
 
 ws.on("message", (message) => {
-  console.log(
-    `Bot Frisk received message from WebSocket backend:`,
-    message.toString("utf-8")
-  );
+  console.log(`Bot Frisk received message from WebSocket backend:`);
+  const data = JSON.parse(message.toString("utf-8"));
+  console.log(data);
 });
 
 bot.once("spawn", async () => {
@@ -67,9 +66,9 @@ bot.once("spawn", async () => {
   bot.chat("sup sup chicken butt");
 
   const spawnData = {
-    message: `Bot ${bot.username} connected to ${bot._client.socket._host}`
-  }
-  const spawnDataString = JSON.stringify(spawnData)
+    message: `Bot ${bot.username} connected to ${bot._client.socket._host}`,
+  };
+  const spawnDataString = JSON.stringify(spawnData);
 
   ws.send(spawnDataString);
 
@@ -139,10 +138,10 @@ bot.once("spawn", async () => {
           (e) =>
             e.type === "player" &&
             e.isValid &&
-            e.position.distanceTo(bot.entity.position) < this.maxFollowDistance &&
+            e.position.distanceTo(bot.entity.position) <
+              this.maxFollowDistance &&
             e?.health > 0 // Check if the player is alive
         );
-    
 
         if (sa) {
           bot.fightBot.setTarget(sa.username);
@@ -173,10 +172,10 @@ bot.once("spawn", async () => {
           (e) =>
             e.type === "player" &&
             e.isValid &&
-            e.position.distanceTo(bot.entity.position) < this.maxFollowDistance &&
+            e.position.distanceTo(bot.entity.position) <
+              this.maxFollowDistance &&
             e?.health > 0 // Check if the player is alive
         );
-    
 
         if (sa) {
           bot.fightBot.setTarget(sa.username);
