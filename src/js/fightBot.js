@@ -121,6 +121,7 @@ class Fight {
     this.wtapping = false;
     this.ashtapping = false;
     this.hasGottenKit = false;
+    this.inBattle = false;
     // Ints
     this.maxFollowDistance = 20;
     this.attackDistnace = 2.8;
@@ -323,6 +324,7 @@ class Fight {
    */
 
   async attack() {
+    this.inBattle = true;
     const dillyDally = () => {
       if (this.knownSexOffenders.length <= 1) return;
 
@@ -1259,8 +1261,8 @@ class Fight {
 
   requestHelp(ws) {
     const data = {
-      message: `${this.bot.username} needs help!`,
-      target: this.target_G,
+      message: `help`,
+      target: this.target_G.username,
     };
     const jsonString = JSON.stringify(data);
     ws.send(jsonString);
@@ -1283,6 +1285,7 @@ class Fight {
     this.isPearling = false;
     this.placing = false;
     this.pve = false;
+    this.inBattle = false;
     this.isInArea = false;
     this.blocking = false;
     this.exploring = false;

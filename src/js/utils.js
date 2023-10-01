@@ -1,5 +1,6 @@
 const { Vec2 } = require("minecrafthawkeye");
 const { Vec3 } = require("vec3");
+const WebSocket = require("ws");
 const Entity = require("prismarine-entity").Entity;
 
 class Timer {
@@ -179,6 +180,18 @@ function getDistanceTo(vec1, vec2) {
   return vec1.distanceTo(vec2);
 }
 
+/**
+ *
+ * @param {WebSocket} ws
+ * @param {string} data
+ */
+function requestData(ws, data) {
+  ws.send({
+    message: "request-data",
+    requested: data,
+  });
+}
+
 module.exports = {
   Timer,
   getDirection,
@@ -194,4 +207,5 @@ module.exports = {
   hasTotems,
   bestPlayerFilter,
   getClosestPlayer,
+  requestData
 };

@@ -9,6 +9,8 @@ const Fight = require("./fightBot.js");
 const pathfinder = require("mineflayer-pathfinder").pathfinder;
 const movement = require("mineflayer-movement");
 const WebSocket = require("ws");
+const { getDistance } = require("./utils.js");
+const { goals } = require("mineflayer-pathfinder");
 
 const bot = mineflayer.createBot({
   host: argv[2],
@@ -19,16 +21,46 @@ const bot = mineflayer.createBot({
 });
 
 const ws = new WebSocket("ws://localhost:8080");
+let kings;
+let hiveConfig;
+let botId;
 
 ws.on("open", () => {
   console.log(`Bot Chara connected to the WebSocket backend`);
 });
 
 ws.on("message", (message) => {
-  console.log(
-    `Bot Chara received message from WebSocket backend:`,
-    message.toString("utf-8")
-  );
+  console.log(`Bot Chara received message from WebSocket backend:`);
+  try {
+    const data = JSON.parse(message.toString("utf-8"));
+    console.log(data.message);
+
+    if (data.type && data.type === "important") {
+      kings = data.data.kings;
+    }
+
+    if (data.message) {
+      switch (data.message) {
+        case "config":
+          hiveConfig = data.data;
+          break;
+
+        case "help":
+          if (bot.fightBot.inBattle) return;
+          bot.fightBot.clear();
+          bot.fightBot.readyUp();
+          bot.fightBot.setTarget(data.target.username);
+          bot.fightBot.attack();
+          break;
+
+        case "id":
+          botId = data.id;
+          break;
+      }
+    }
+  } catch (error) {
+    console.log(error);
+  }
 });
 
 bot.loadPlugin(pathfinder);
@@ -44,17 +76,67 @@ bot.once("spawn", async () => {
 
   bot.chat("Heyyy =)");
 
-  ws.send(`Bot ${bot.username} connected to ${bot._client.socket._host}`);
+  const spawnData = {
+    message: `Bot ${bot.username} connected to ${bot._client.socket._host}`,
+    health: bot.health,
+    food: bot.food,
+    type: "fighter",
+    id: botId,
+  };
+
+  const spawnDataString = JSON.stringify(spawnData);
+
+  ws.send(spawnDataString);
 
   bot.fightBot = new Fight(bot);
 
-  bot.on("physicsTick", () => {
+  let pathing;
+  bot.on("physicsTick", async () => {
     if (
       bot.health <= 8 &&
       bot.fightBot.settings.requestHelp &&
       bot.fightBot.IsCombat
     ) {
       bot.fightBot.requestHelp(ws);
+    }
+
+    if (hiveConfig !== null) {
+      const shouldFollow = hiveConfig.followOwner;
+
+      if (shouldFollow) {
+        const owner = Object.values(bot.entities).find(
+          (e) =>
+            kings.includes(e.username) &&
+            bot.entity.position.distanceTo(e.position) <= 25
+        );
+
+        // Either too far away or not in game
+        if (!owner) return;
+
+        const distance = getDistance(bot.entity.position, owner.position);
+
+        if (bot.fightBot.inBattle) {
+          bot.pathfinder.stop();
+          return;
+        }
+
+        if (pathing) return;
+
+        if (distance <= 3) return;
+
+        const goal = new goals.GoalNear(
+          owner.position.x,
+          owner.position.y,
+          owner.position.z,
+          3
+        );
+        pathing = true;
+        await bot.pathfinder.goto(goal).catch((r) => {
+          console.log(r);
+          pathing = false;
+        });
+        pathing = false;
+      }
     }
   });
 
