@@ -8,7 +8,8 @@
     "pika": "node main.js play.pikanetwork.net 25565",
     "start": "node main.js NubPlayzBoi.aternos.me 26216",
     "startChara": "node ./js/chara.js NubPlayzBoi.aternos.me 26216",
-    "lan": "node main.js localhost 25565"
+    "lan": "node main.js mc.ultranetwork.net 25565",
+    "link": "node main.js LinkDiscord.aternos.me 15572"
   },
   "author": "Ash",
   "license": "ISC",

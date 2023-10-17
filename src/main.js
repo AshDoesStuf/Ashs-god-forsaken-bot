@@ -4,6 +4,8 @@ const socketIO = require("socket.io");
 const path = require("path");
 const { argv } = require("node:process");
 
+
+
 module.exports = argv;
 const { bot, hitCounter } = require("./bot.js");
 const { hasHealthPotions } = require("./js/utils");
@@ -146,7 +148,9 @@ bot.once("spawn", async () => {
         hits: hitCounter,
         lastFightTime: {
           seconds: Math.floor(bot.fightBot?.currentTime / 1000),
-          minutes: (Math.floor(bot.fightBot?.currentTime / 1000) / 60).toFixed(2),
+          minutes: (Math.floor(bot.fightBot?.currentTime / 1000) / 60).toFixed(
+            2
+          ),
         },
         timeSinceStart: Math.floor(bot.fightBot?.timeElapsed / 1000),
         activeEffects:

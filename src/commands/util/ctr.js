@@ -10,7 +10,7 @@ module.exports = {
    * @param {string[]} args
    */
   execute(bot, username, args) {
-    switch (args[1]) {
+    switch (args[0]) {
       case "jump":
         bot.setControlState("jump", true);
         bot.setControlState("jump", false);

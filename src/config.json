@@ -6,7 +6,9 @@
     "LinkDiscord",
     "MajorGalu",
     "AshLikesFood",
-    "BeveledCube"
+    "BeveledCube",
+    "LoliSlayer"
   ],
-  "prefix": "f!"
+  "prefix": "f!",
+  "useLogs": true
 }

@@ -136,7 +136,9 @@ function hasTotems(bot) {
  * @param {Entity} entity
  */
 function bestPlayerFilter(entity) {
-  return entity.type === "player";
+  return (
+    entity.type === "player"
+  );
 }
 
 /**
@@ -192,6 +194,113 @@ function requestData(ws, data) {
   });
 }
 
+/**
+ *
+ * @param {import("mineflayer").Bot} bot
+ * @param {string} id
+ */
+async function equipItemById(bot, id) {
+  const ItemInInventory = bot.inventory.items().find((i) => i.type === id);
+
+  if (!ItemInInventory) return;
+
+  await bot.equip(ItemInInventory, "hand");
+}
+
+/**
+ *
+ * @param {import("mineflayer").Bot} bot
+ * @param {string} name
+ */
+async function equipItemByName(bot, name) {
+  const ItemInInventory = bot.inventory.items().find((i) => i.name === name);
+
+  if (!ItemInInventory) return;
+
+  await bot.equip(ItemInInventory, "hand");
+}
+
+function remove(array, element) {
+  if (!array.includes(element)) return new Error("Element not found");
+
+  for (let i = array.length - 1; i >= 0; i--) {
+    if (array[i] === element) {
+      array.splice(i, 1);
+    }
+  }
+}
+
+function sortEntityListByDistance(bot, e1, e2) {
+  if (
+    getDistance(e1.position, bot.entity.position) >
+    getDistance(e2.position, bot.entity.position)
+  ) {
+    return 1;
+  } else if (
+    getDistance(e1.position, bot.entity.position) >
+    getDistance(e2.position, bot.entity.position)
+  ) {
+    return -1;
+  } else return 0;
+}
+
+/**
+ * 
+ * @param {import("mineflayer").Bot} bot 
+ * @param {Entity} entity 
+ * @param {number} vectorLength 
+ */
+function canSeeEntity(bot, entity, vectorLength = 5 / 16) {
+  const { height, position } = bot.entity;
+  const transparentBlocks = bot.registry.blocksArray
+    .filter((e) => e.transparent || e.boundingBox === "empty")
+    .map((e) => e.id);
+  const entityPos = entity.position.offset(
+    -entity.width / 2,
+    0,
+    -entity.width / 2
+  );
+
+  // bounding box verticies (8 verticies)
+  const targetBoundingBoxVertices = [
+    entityPos.offset(0, 0, 0),
+    entityPos.offset(entity.width, 0, 0),
+    entityPos.offset(0, 0, entity.width),
+    entityPos.offset(entity.width, 0, entity.width),
+    entityPos.offset(0, entity.height, 0),
+    entityPos.offset(entity.width, entity.height, 0),
+    entityPos.offset(0, entity.height, entity.width),
+    entityPos.offset(entity.width, entity.height, entity.width),
+  ];
+
+  // Check the line of sight for every vertex
+  const lineOfSight = targetBoundingBoxVertices.map((bbVertex) => {
+    // cursor starts at bot's eyes
+    const cursor = position.offset(0, height, 0);
+    // a vector from a to b = b - a
+    const step = bbVertex.minus(cursor).unit().scaled(vectorLength);
+    // we shouldn't step farther than the distance to the entity, plus the longest line inside the bounding box
+    const maxSteps = bbVertex.distanceTo(position) / vectorLength;
+
+    // check for obstacles
+    for (let i = 0; i < maxSteps; ++i) {
+      cursor.add(step);
+
+      const block = bot.blockAt(cursor);
+
+      // block must be air/null or a transparent block
+      if (block !== null && !transparentBlocks.includes(block.type)) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
+  // must have at least 1 vertex in line-of-sight
+  return lineOfSight.some((e) => e);
+}
+
 module.exports = {
   Timer,
   getDirection,
@@ -207,5 +316,10 @@ module.exports = {
   hasTotems,
   bestPlayerFilter,
   getClosestPlayer,
-  requestData
+  requestData,
+  equipItemById,
+  equipItemByName,
+  remove,
+  sortEntityListByDistance,
+  canSeeEntity
 };

@@ -9,6 +9,7 @@ const { loader } = require("@nxg-org/mineflayer-smooth-look");
 const movement = require("mineflayer-movement").plugin;
 const minecraftHawkEye = require("minecrafthawkeye");
 const WebSocket = require("ws");
+const { useLogs } = require("./config.json");
 
 const sleep = async (ms = 2000) => {
   return new Promise((r) => setTimeout(r, ms));
@@ -20,12 +21,13 @@ const {
   bestPlayerFilter,
   getClosestPlayer,
   getDistance,
+  remove,
 } = require("./js/utils.js");
 const { goals } = require("mineflayer-pathfinder");
 
 const bot = mineflayer.createBot({
   host: info[2] || "localhost",
-  username: "Frisk",
+  username: "Chisomo",
   mainHand: "left",
   version: "1.18.2",
   port: parseInt(info[3]),
@@ -52,7 +54,7 @@ let hitCounter = 0;
 let tempCount = 0;
 bot.bloodhound.yaw_correlation_enabled = true;
 
-const ws = new WebSocket("ws://localhost:8080");
+const ws = new WebSocket("ws://192.168.8.102:8080");
 let kings;
 let hiveConfig;
 let id;
@@ -94,7 +96,7 @@ bot.once("spawn", async () => {
   await bot.waitForChunksToLoad();
 
   bot.setMaxListeners(100);
-  bot.chat("sup sup chicken butt");
+  // bot.chat("sup sup chicken butt");
 
   const spawnData = {
     message: `Bot ${bot.username} connected to ${bot._client.socket._host}`,
@@ -191,14 +193,26 @@ bot.once("spawn", async () => {
   bot.on("death", async () => {
     stop();
     bot.fightBot.clear();
-    bot.chat("alright");
+    if (useLogs) {
+      console.log("i ded lol");
+    } else {
+      bot.chat("alright");
+    }
   });
 
   bot.on("entityDead", async (e) => {
-    if (e.id !== bot.entity.id && e.id === bot.fightBot.target_G?.id) {
+    if (
+      e.id !== bot.entity.id &&
+      e.id === bot.fightBot.target_G?.id &&
+      !bot.fightBot.ffa
+    ) {
       stop();
-      bot.fightBot.clear();
-      bot.chat("gg nerd");
+
+      if (useLogs) {
+        console.log("target died");
+      } else {
+        bot.chat("gg nerd");
+      }
 
       const healthPot = bot.inventory
         .items()
@@ -210,29 +224,47 @@ bot.once("spawn", async () => {
         bot.activateItem(false);
       }
 
-      if (bot.fightBot.settings.freeForAll) {
-        const sa = bot.nearestEntity(
-          (e) =>
-            e.type === "player" &&
-            e.isValid &&
-            e.position.distanceTo(bot.entity.position) <
-              this.maxFollowDistance &&
-            e?.health > 0 // Check if the player is alive
-        );
-
-        if (sa) {
-          bot.fightBot.setTarget(sa.username);
+      console.log(bot.fightBot.targets);
+      if (bot.fightBot.settings.freeForAll && bot.fightBot.targets.length > 0) {
+        if (bot.fightBot.targets.includes(e.username)) {
+          remove(bot.fightBot.targets, e.username);
         }
-        bot.fightBot.attack();
+
+        const next = bot.fightBot.targets[0];
+        console.log(next);
+
+        if (next) {
+          bot.fightBot.setTarget(next);
+          bot.fightBot.attack();
+        }
+      }
+    } else if (
+      bot.fightBot.archerTarget &&
+      e.id === bot.fightBot.archerTarget.id
+    ) {
+      stop();
+
+      if (useLogs) {
+        console.log("target died");
+      } else {
+        bot.chat("gg nerd");
       }
     }
   });
 
   bot.on("entityGone", async (e) => {
-    if (e.id !== bot.entity.id && e.id === bot.fightBot.target_G?.id) {
+    if (
+      e.id !== bot.entity.id &&
+      e.id === bot.fightBot.target_G?.id &&
+      !bot.fightBot.ffa
+    ) {
       stop();
-      bot.fightBot.clear();
-      bot.chat("sure i guess");
+
+      if (useLogs) {
+        console.log("target left");
+      } else {
+        bot.chat("sure i guess");
+      }
 
       const healthPot = bot.inventory
         .items()
@@ -244,20 +276,29 @@ bot.once("spawn", async () => {
         bot.activateItem(false);
       }
 
-      if (bot.fightBot.settings.freeForAll && !bot.fightBot.IsCombat) {
-        const sa = bot.nearestEntity(
-          (e) =>
-            e.type === "player" &&
-            e.isValid &&
-            e.position.distanceTo(bot.entity.position) <
-              this.maxFollowDistance &&
-            e?.health > 0 // Check if the player is alive
-        );
-
-        if (sa) {
-          bot.fightBot.setTarget(sa.username);
+      if (bot.fightBot.settings.freeForAll && bot.fightBot.targets.length > 0) {
+        if (bot.fightBot.targets.includes(e.username)) {
+          remove(bot.fightBot.targets, e.username);
         }
-        bot.fightBot.attack();
+
+        const next = bot.fightBot.targets[0];
+        console.log(next);
+
+        if (next) {
+          bot.fightBot.setTarget(next);
+          bot.fightBot.attack();
+        }
+      }
+    } else if (
+      bot.fightBot.archerTarget &&
+      e.id === bot.fightBot.archerTarget.id
+    ) {
+      stop();
+
+      if (useLogs) {
+        console.log("target left");
+      } else {
+        bot.chat("alright");
       }
     }
   });
@@ -290,6 +331,7 @@ bot.once("spawn", async () => {
     }
     if (hiveConfig && hiveConfig.defendWorkers) {
       // console.log("gay3");
+
       ws.send(
         JSON.stringify({
           message: "currentWorkers",
@@ -302,7 +344,6 @@ bot.once("spawn", async () => {
 
       if (workers.length > 0) {
         if (bot.fightBot.inBattle) return;
-        // console.log("not inbattle")
 
         if (
           workers.includes(victim.username) &&
@@ -321,6 +362,20 @@ bot.once("spawn", async () => {
         }
       }
     }
+
+    if (victim === bot.entity) {
+      if (bot.fightBot.inBattle) {
+        return;
+      }
+
+      if (attacker.username === bot.username) {
+        return;
+      }
+
+      bot.fightBot.clear();
+      bot.fightBot.setTarget(attacker.username);
+      bot.fightBot.attack();
+    }
   });
 
   function stop() {
@@ -335,7 +390,7 @@ bot.on("error", (err) => {
 });
 
 bot.on("kicked", (r) => {
-  console.log(`Kicked due to ${chalk.white(r)}`);
+  console.log(`Kicked due to ${chalk.green(r)}`);
   process.exit(0);
 });
 
