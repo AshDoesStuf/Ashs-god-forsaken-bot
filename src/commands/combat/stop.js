@@ -1,5 +1,5 @@
 /**
- * @type {import("../../index").Command}
+ * @type {import("../../index.d.ts").Command}
  */
 module.exports = {
   name: "stop",
@@ -11,5 +11,6 @@ module.exports = {
 
     bot.followTarget = null;
     bot.fightBot.stop();
+    bot.patrolBot.stop();
   },
 };

@@ -24,12 +24,14 @@ const {
   remove,
 } = require("./js/utils.js");
 const { goals } = require("mineflayer-pathfinder");
+const PatrolBot = require("./js/patrolBot.js");
 
 const bot = mineflayer.createBot({
   host: info[2] || "localhost",
-  username: "Chisomo",
+  username: "AshLikesFood2",
   mainHand: "left",
-  version: "1.18.2",
+  version: "1.8.9",
+  physicsEnabled: true,
   port: parseInt(info[3]),
 });
 
@@ -54,7 +56,7 @@ let hitCounter = 0;
 let tempCount = 0;
 bot.bloodhound.yaw_correlation_enabled = true;
 
-const ws = new WebSocket("ws://192.168.8.102:8080");
+const ws = new WebSocket("ws://localhost:8080");
 let kings;
 let hiveConfig;
 let id;
@@ -112,6 +114,7 @@ bot.once("spawn", async () => {
   ws.send(spawnDataString);
 
   bot.fightBot = new Fight(bot);
+  bot.patrolBot = new PatrolBot(bot);
   bot.commands = [];
   bot.followTarget = null;
 
@@ -121,13 +124,13 @@ bot.once("spawn", async () => {
 
   let pathing = false;
   bot.on("physicsTick", async () => {
-    if (
-      bot.health <= 8 &&
-      bot.fightBot.settings.requestHelp &&
-      bot.fightBot.IsCombat
-    ) {
-      bot.fightBot.requestHelp(ws);
-    }
+    // if (
+    //   bot.health <= 8 &&
+    //   bot.fightBot.settings.requestHelp &&
+    //   bot.fightBot.IsCombat
+    // ) {
+    //   bot.fightBot.requestHelp(ws);
+    // }
 
     if (hiveConfig !== null) {
       const shouldFollow = hiveConfig.followOwner;
@@ -214,15 +217,15 @@ bot.once("spawn", async () => {
         bot.chat("gg nerd");
       }
 
-      const healthPot = bot.inventory
-        .items()
-        .find((i) => i.nbt?.value?.Potion?.value.includes("healing"));
-      if (healthPot && bot.health <= 10 && bot.fightBot?.hasHealthPotions()) {
-        await bot.lookAt(bot.entity.position, true);
-        await sleep(200);
-        await bot.equip(healthPot, "hand");
-        bot.activateItem(false);
-      }
+      // const healthPot = bot.inventory
+      //   .items()
+      //   .find((i) => i.nbt?.value?.Potion?.value.includes("healing"));
+      // if (healthPot && bot.health <= 10 && bot.fightBot?.hasHealthPotions()) {
+      //   await bot.lookAt(bot.entity.position, true);
+      //   await sleep(200);
+      //   await bot.equip(healthPot, "hand");
+      //   bot.activateItem(false);
+      // }
 
       console.log(bot.fightBot.targets);
       if (bot.fightBot.settings.freeForAll && bot.fightBot.targets.length > 0) {
@@ -249,6 +252,28 @@ bot.once("spawn", async () => {
       } else {
         bot.chat("gg nerd");
       }
+    } else if (bot.patrolBot.target && e.id === bot.patrolBot.target.id) {
+      stop();
+
+      bot.patrolBot.target = null;
+      bot.patrolBot.patrolling = true;
+      bot.patrolBot.startPatrol();
+    } else if (
+      e.id !== bot.entity.id &&
+      e.id === bot.fightBot.target_G?.id &&
+      bot.fightBot.ffa
+    ) {
+      stop();
+
+      let targets = await bot.fightBot.getFFATargets(
+        (e) =>
+          e !== bot.entity &&
+          e.equipment[4] &&
+          e.equipment[4].name === "diamond_chestplate"
+      );
+
+      bot.fightBot.ffaTarget =
+        targets[Math.floor(Math.random() * targets.length)];
     }
   });
 
@@ -266,15 +291,15 @@ bot.once("spawn", async () => {
         bot.chat("sure i guess");
       }
 
-      const healthPot = bot.inventory
-        .items()
-        .find((i) => i.nbt?.value?.Potion?.value.includes("healing"));
-      if (healthPot && bot.health <= 10 && bot.fightBot?.hasHealthPotions()) {
-        await bot.lookAt(bot.entity.position, true);
-        await sleep(200);
-        await bot.equip(healthPot);
-        bot.activateItem(false);
-      }
+      // const healthPot = bot.inventory
+      //   .items()
+      //   .find((i) => i.nbt?.value?.Potion?.value.includes("healing"));
+      // if (healthPot && bot.health <= 10 && bot.fightBot?.hasHealthPotions()) {
+      //   await bot.lookAt(bot.entity.position, true);
+      //   await sleep(200);
+      //   await bot.equip(healthPot);
+      //   bot.activateItem(false);
+      // }
 
       if (bot.fightBot.settings.freeForAll && bot.fightBot.targets.length > 0) {
         if (bot.fightBot.targets.includes(e.username)) {
@@ -300,6 +325,22 @@ bot.once("spawn", async () => {
       } else {
         bot.chat("alright");
       }
+    } else if (
+      e.id !== bot.entity.id &&
+      e.id === bot.fightBot.target_G?.id &&
+      bot.fightBot.ffa
+    ) {
+      stop();
+
+      let targets = await bot.fightBot.getFFATargets(
+        (e) =>
+          e !== bot.entity &&
+          e.equipment[4] &&
+          e.equipment[4].name === "diamond_chestplate"
+      );
+
+      bot.fightBot.ffaTarget =
+        targets[Math.floor(Math.random() * targets.length)];
     }
   });
 

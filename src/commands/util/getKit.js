@@ -6,14 +6,15 @@ module.exports = {
   execute(bot, username, args) {
     const kit = args[0];
 
-    bot.chat(`/kit ${kit}`);
+    bot.chat(`/kit`);
 
-    // bot.once("windowOpen", async (window) => {
-    //   switch (kit) {
-    //     case "knight":
-    //       await bot.clickWindow(11, 0, 0);
-    //       break;
-    //   }
-    // });
+    bot.once("windowOpen", async (window) => {
+      switch (kit) {
+        case "knight":
+          await bot.clickWindow(11, 0, 0);
+          // ► You selected the kit Knight.
+          break;
+      }
+    });
   },
 };

@@ -47,6 +47,20 @@ bot.once("spawn", async () => {
       bot.chat(message);
     });
 
+    socket.on("set-target", (targetUsername) => {
+      if (bot.fightBot.inBattle) {
+        return;
+      }
+
+      if (targetUsername === bot.username) {
+        return;
+      }
+
+      bot.fightBot.clear();
+      bot.fightBot.setTarget(targetUsername);
+      bot.fightBot.attack();
+    })
+
     bot.on("chat", (username, message) => {
       socket.emit("game-message", {
         username: username,

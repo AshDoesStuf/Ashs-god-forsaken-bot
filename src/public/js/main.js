@@ -62,11 +62,17 @@ socket.on("main-update", (data) => {
     data.heldItemDurability;
   document.getElementById("offenders").innerHTML = data.offenders;
   document.getElementById("current-target").innerHTML = data.currentTarget;
-  document.getElementById("current-target-entity").innerHTML = data.currentTargetEntity;
+  document.getElementById("current-target-entity").innerHTML =
+    data.currentTargetEntity;
   document.getElementById("offhand-prio").innerHTML = data.offhandPrio;
   document.getElementById("moving").innerHTML = data.moving;
   document.getElementById("uppercutting").innerHTML = data.uppercutting;
   document.getElementById("exploring").innerHTML = data.exploring;
   document.getElementById("ready").innerHTML = data.getting_ready;
   document.getElementById("healing").innerHTML = data.healing;
+});
+
+document.getElementById("set-target").addEventListener("click", (ev) => {
+  const target = document.getElementById("target").value;
+  socket.emit("set-target", target);
 });

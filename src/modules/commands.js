@@ -93,7 +93,31 @@ module.exports = (bot) => {
   //Ultra
   bot.on("messagestr", (msg) => {
     // console.log(msg);
-    const whipserRegex = /(\w+) » You » (.+)/;
+    const whipserRegex = /MEMBER (\w.+) ➟ (.+)/;
+
+    const match = msg.match(whipserRegex);
+
+    if (match) {
+      const [, username, message] = match;
+      if (username === bot.username) return;
+
+      if (!message.startsWith(prefix)) return;
+      const args = message.slice(prefix.length).split(" ");
+      const command = bot.commands.find((cm) => cm.name.includes(args[0]));
+
+      if (args[0] === command.name && master.includes(username)) {
+        // Remove the command name from the args array
+        args.splice(0, 1);
+
+        command.execute(bot, username, args);
+      }
+    }
+  });
+
+  //APle
+  bot.on("messagestr", (msg) => {
+    // console.log(msg);
+    const whipserRegex = /MEMBER (.+) ➟ (.+)/;
 
     const match = msg.match(whipserRegex);
 

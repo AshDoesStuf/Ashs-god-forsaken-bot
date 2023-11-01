@@ -33,7 +33,7 @@ ws.on("message", (message) => {
   console.log(`Bot Chara received message from WebSocket backend:`);
   try {
     const data = JSON.parse(message.toString("utf-8"));
-    console.log(data.message);
+    console.log(data);
 
     if (data.type && data.type === "important") {
       kings = data.data.kings;
@@ -81,7 +81,8 @@ bot.once("spawn", async () => {
     health: bot.health,
     food: bot.food,
     type: "fighter",
-    id: botId,
+    botId,
+    name: bot.username,
   };
 
   const spawnDataString = JSON.stringify(spawnData);
@@ -92,13 +93,13 @@ bot.once("spawn", async () => {
 
   let pathing;
   bot.on("physicsTick", async () => {
-    if (
-      bot.health <= 8 &&
-      bot.fightBot.settings.requestHelp &&
-      bot.fightBot.IsCombat
-    ) {
-      bot.fightBot.requestHelp(ws);
-    }
+    // if (
+    //   bot.health <= 8 &&
+    //   bot.fightBot.settings.requestHelp &&
+    //   bot.fightBot.IsCombat
+    // ) {
+    //   bot.fightBot.requestHelp(ws);
+    // }
 
     if (hiveConfig !== null) {
       const shouldFollow = hiveConfig.followOwner;

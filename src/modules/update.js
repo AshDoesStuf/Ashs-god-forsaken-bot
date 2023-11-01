@@ -6,13 +6,16 @@ const mineflayer = require("mineflayer"); // eslint-disable-line
 
 module.exports = (bot) => {
   bot.on("messagestr", (msg) => {
-    const inPvpArea = /(!) Fly mode enabled./;
-    const inSpawn = /(!) Fly mode disabled./;
+    // console.log(msg);
+    const inPvpArea = /(!) Fly mode disabled\.$/;
+    const inSpawn = /(!) Fly mode enabled\.$/;
 
-    if (msg.match(inPvpArea)) {
+    if (inPvpArea.test(msg)) {
       bot.fightBot.isInArea = true;
-    } else if (inSpawn) {
+      console.log("Im in the pvp area")
+    } else if (inSpawn.test(msg)) {
       bot.fightBot.isInArea = false;
+      console.log("Im at spawn")
     }
   });
 };

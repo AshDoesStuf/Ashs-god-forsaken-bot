@@ -15,12 +15,15 @@ const {
   hasTotems,
   bestPlayerFilter,
   sortEntityListByDistance,
-  canSeeEntity
+  canSeeEntity,
 } = require("./utils");
 const sleep = (ms = 2000) => {
   return new Promise((r) => setTimeout(r, ms));
 };
 const { getDirection } = require("./utils.js");
+const Entity = require("prismarine-viewer/viewer/lib/entity/Entity");
+
+const mcData = require("minecraft-data")("1.19.4");
 
 const CarinalDirections = {
   north: { x: 0, z: -1, name: "north" },
@@ -44,7 +47,7 @@ class Fight {
     this.bot = bot;
     this.delay = 10;
     this.settings = {
-      aggressive: true,
+      aggressive: false,
       hacker: false,
       display: false, // Display chat messages like hits
       persistant: false,
@@ -101,6 +104,7 @@ class Fight {
     this.targets = [];
     this.pveTarg = null;
     this.archerTarget = null;
+    this.ffaTarget = null;
     // Bools
     this.targetAbove3 = false;
     this.isInArea = false;
@@ -151,6 +155,32 @@ class Fight {
    * Look at the specified target
    */
   async lookPlayer() {
+    /**
+     * @param {Vec3} targetPos
+     */
+    const customLook = async (targetPos, duration = 10) => {
+      const bot = this.bot;
+      const startPitch = bot.entity.pitch;
+      const startYaw = bot.entity.yaw;
+      const delta = targetPos.minus(
+        bot.entity.position.offset(0, bot.entity.height, 0)
+      );
+      const targetYaw = Math.atan2(-delta.x, -delta.z);
+      const groundDistance = Math.sqrt(delta.x * delta.x + delta.z * delta.z);
+      const targetPitch = Math.atan2(delta.y, groundDistance);
+
+      const pitchIncrement = (targetPitch - startPitch) / duration;
+      const yawIncrement = (targetYaw - startYaw) / duration;
+
+      for (let i = 0; i < duration; i++) {
+        await this.bot.look(
+          startYaw + i * yawIncrement,
+          startPitch + i * pitchIncrement
+        );
+        await new Promise((resolve) => setTimeout(resolve, 1));
+      }
+    };
+
     const look = async () => {
       if (
         this.target_G &&
@@ -161,22 +191,10 @@ class Fight {
         !this.isPearling &&
         !this.healing
       ) {
-        this.bot.lookAt(this.target_G.position.offset(0, 1.5, 0));
+        // customLook(this.target_G.position.offset(0, 1.5, 0), 5);
+        this.bot.lookAt(this.target_G.position.offset(0, 1.625, 0));
       }
     };
-
-    function interpolate(prev, next, speed) {
-      let diff = wrapAngleTo180_float(next - prev);
-      return prev + diff / speed;
-    }
-
-    function clamp_float(num, min, max) {
-      return Math.max(min, Math.min(num, max));
-    }
-
-    function wrapAngleTo180_float(angle) {
-      return ((angle + 180) % 360) - 180;
-    }
 
     await look();
   }
@@ -187,7 +205,7 @@ class Fight {
         (e) =>
           e.type === "mob" &&
           e.position.distanceTo(this.bot.entity.position) <= 16 &&
-          e.mobType !== "Armor Stand"
+          e.displayName !== "Armor Stand"
       );
 
       if (nearestEntity) {
@@ -235,11 +253,9 @@ class Fight {
 
     if (this.isShooting) return;
 
-    if (this.bot.entity.isCollidedHorizontally && !this.isPathfinding) {
-      this.bot.setControlState("jump", true);
-      await sleep(300);
-      this.bot.setControlState("jump", false);
-    }
+    // if (this.bot.entity.isCollidedHorizontally && !this.isPathfinding) {
+    //   this.bot.setControlState("jump", true);
+    // }
 
     if (this.distance <= this.maxFollowDistance) {
       if (this.distance > 1.5) {
@@ -248,11 +264,39 @@ class Fight {
         // Move towards the target
         this.bot.setControlState("sprint", true);
         this.bot.setControlState("forward", true);
+
+        if (this.settings.hacker) {
+          const randomLocation = this.target_G.position.offset(
+            Math.floor(Math.random() * (5 - 1) + 1),
+            0,
+            Math.floor(Math.random() * (5 - 1) + 1)
+          );
+
+          this.bot._client.write("position", {
+            x: randomLocation.x,
+            y: randomLocation.y,
+            z: randomLocation.z,
+          });
+        }
       } else {
         if (this.wtapping && this.ashtapping && this.stapping) return;
 
         // Stop moving if too close
         this.bot.setControlState("forward", false);
+
+        if (this.settings.hacker) {
+          const randomLocation = this.target_G.position.offset(
+            Math.floor(Math.random() * (5 - 1) + 1),
+            0,
+            Math.floor(Math.random() * (5 - 1) + 1)
+          );
+
+          this.bot._client.write("position", {
+            x: randomLocation.x,
+            y: randomLocation.y,
+            z: randomLocation.z,
+          });
+        }
       }
 
       if (this.closeToTarg) {
@@ -502,18 +546,6 @@ class Fight {
 
               this.bot.emit("hit");
             } else if (this.settings.hacker) {
-              const randomLocation = targetEntity.position.offset(
-                Math.floor(Math.random() * (5 - 1) + 1),
-                0,
-                Math.floor(Math.random() * (5 - 1) + 1)
-              );
-
-              this.bot._client.write("position", {
-                x: randomLocation.x,
-                y: randomLocation.y,
-                z: randomLocation.z,
-              });
-
               this.uppercut();
               this.stap("pre");
               this.bot.attack(targetEntity);
@@ -660,6 +692,11 @@ class Fight {
     const loop = async () => {
       if (!this.target) return;
       await attk();
+
+      // 1.8
+      // setTimeout(loop, Math.floor(Math.random() * (100 - 80) + 80));
+
+      // 1.9+
       setTimeout(loop, this.currentCooldown);
     };
 
@@ -692,39 +729,21 @@ class Fight {
   async ffaAttack() {
     let targets = await this.getFFATargets(
       (e) =>
-        e !== this.bot.entity 
-        &&
+        e !== this.bot.entity &&
         e.equipment[4] &&
         e.equipment[4].name === "diamond_chestplate"
     );
     console.log(targets);
     this.inBattle = true;
 
-    const attack = async () => {
-      targets = await this.getFFATargets(
-        (e) =>
-          e !== this.bot.entity 
-          &&
-          e.equipment[4] &&
-          e.equipment[4].name === "diamond_chestplate"
-      );
+    this.ffaTarget = targets.shift();
 
+    const attack = async () => {
       if (targets.length === 0) return;
 
-      const name = targets[0];
+      if (!this.ffaTarget) return;
 
-      if (!name) return;
-
-      const currentTarget = this.bot.players[name]?.entity;
-      this.target_G = currentTarget;
-      this.target = targets[0];
-      this.calculateDistance();
-      console.log(
-        "Current target",
-        currentTarget.username,
-        "distance:",
-        this.distance
-      );
+      const currentTarget = this.bot.players[this.ffaTarget]?.entity;
       if (
         currentTarget &&
         !this.eating &&
@@ -734,6 +753,16 @@ class Fight {
         !this.gettingReady &&
         !this.healing
       ) {
+        this.target_G = currentTarget;
+        this.target = this.ffaTarget;
+        this.calculateDistance();
+        console.log(
+          "Current target",
+          currentTarget.username,
+          "distance:",
+          this.distance
+        );
+
         if (this.distance < this.maxFollowDistance) {
           this.IsCombat = true;
           if (between(this.distance, 0, this.attackDistnace) && this.IsCombat) {
@@ -927,25 +956,9 @@ class Fight {
   }
 
   async attackMobs() {
-    const passiveMobs = [
-      "Bat",
-      "Chicken",
-      "Cow",
-      "Donkey",
-      "Horse",
-      "Llama",
-      "Mooshroom",
-      "Mule",
-      "Ocelot",
-      "Pig",
-      "Rabbit",
-      "Sheep",
-      "Snow Golem",
-      "Squid",
-      "Trader Llama",
-      "Wolf",
-      "Axolotl",
-    ];
+    const passiveMobs = mcData.entitiesArray
+      .filter((e) => e.type === "passive")
+      .map((e) => e.displayName);
 
     const loop = async () => {
       if (!this.safety) return;
@@ -954,7 +967,7 @@ class Fight {
         (e) =>
           e.type === "mob" &&
           e.position.distanceTo(this.bot.entity.position) <= 32 &&
-          !passiveMobs.includes(e.mobType)
+          !passiveMobs.includes(e.displayName)
       );
 
       if (!nearestEntity) {
@@ -973,7 +986,7 @@ class Fight {
       const bow = this.getItemByName("bow");
       const arrows = this.getItemByName("arrow");
 
-      if (distanceY >= 3 && distance < 10 && bow) {
+      if (distanceY > 3 && distance < 10 && bow && arrows) {
         if (this.isShooting) {
           this.isShooting = false;
           this.bot.hawkEye.stop();
@@ -1032,13 +1045,33 @@ class Fight {
         if (chanceToBlock) {
           this.blocking = true;
           this.bot.activateItem(true);
-          await sleep(delay * 1000);
+          await new Promise((resolve) => setTimeout(resolve, delay * 1000));
           this.bot.deactivateItem();
           this.blocking = false;
         }
       }
-    } else if (shield && this.offHandPriority === 3) {
-      await this.bot.equip(shield, "off-hand");
+    } else if (shield && this.offHandPriority === 3 && !this.bot.heldItem) {
+      if (slots[offHandSlot] && slots[offHandSlot].name === "shield") {
+        if (
+          this.IsCombat &&
+          this.closeToTarg &&
+          !this.eating &&
+          !this.isHungry &&
+          !this.blocking
+        ) {
+          const chanceToBlock = Math.random() * 2 > 1.425;
+
+          if (chanceToBlock) {
+            this.blocking = true;
+            this.bot.activateItem(true);
+            await new Promise((resolve) => setTimeout(resolve, delay * 1000));
+            this.bot.deactivateItem();
+            this.blocking = false;
+          }
+        }
+      } else if (shield && this.offHandPriority === 3 && !this.bot.heldItem) {
+        await this.bot.equip(shield, "off-hand");
+      }
     }
   }
 
@@ -1061,11 +1094,11 @@ class Fight {
     });
   }
 
-  update() {
+  async update() {
     const bot = this.bot;
     if (this.target_G) {
-      this.lookPlayer();
-      this.followTarget();
+      await this.lookPlayer();
+      await this.followTarget();
       if (
         Math.round(this.target_G.position.y - this.bot.entity.position.y) >= 3
       ) {
@@ -1078,14 +1111,19 @@ class Fight {
     if (this.pveTarg) {
       this.followMob();
     }
+
     this.calculateDistance();
 
-    this.totemEquip();
-    this.block();
-    this.equip();
+    // this.totemEquip();
+    // this.block();
+    try {
+      await this.equip();
+    } catch (error) {
+      console.log(error)
+    }
 
     this.setPriority();
-    this.releve();
+    await this.releve();
     if (bot.heldItem) {
       this.debounce = this.changeDebounce(bot?.heldItem);
     } else if (!bot?.heldItem) {
@@ -1093,10 +1131,10 @@ class Fight {
     }
 
     if (!bot.usingHeldItem) {
-      this.runAndEatGap();
+      await this.runAndEatGap();
     }
 
-    this.updateMainHand();
+    await this.updateMainHand();
     this.calcTicks(this?.debounce);
     if (this.IsCombat) {
       this.timeSinceLastChug++;
@@ -1599,12 +1637,11 @@ class Fight {
       return false;
     }
 
-    this.healing = true;
-
     if (this.bot.health <= 15) {
+      this.healing = true;
       try {
         await this.bot.lookAt(this.bot.entity.position.offset(0, -1, 0), true);
-        await sleep(200);
+        await new Promise((resolve) => setTimeout(resolve, 250));
         await this.bot.equip(potions);
 
         if (this.bot?.heldItem && this.bot?.heldItem === potions) {
@@ -1991,7 +2028,7 @@ class Fight {
   }
 
   calcTicks(seconds) {
-    return (this.currentCooldown = Math.floor((1 / seconds) * 1000) - 0.5);
+    return (this.currentCooldown = Math.floor((1 / seconds) * 1000) - 1);
   }
 
   getInv() {
@@ -2024,7 +2061,9 @@ class Fight {
   }
 
   async updateMainHand() {
-    if (this.healing && this.eating) return;
+    if (this.healing) return;
+
+    if (this.eating) return;
 
     const sword = this.bot.inventory
       .items()

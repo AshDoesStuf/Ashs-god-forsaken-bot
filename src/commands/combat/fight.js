@@ -1,11 +1,14 @@
 // commands/fight.js
 
+const Vec3 = require("vec3").Vec3
+
 const {
   bestPlayerFilter,
   sortEntityListByDistance,
 } = require("../../js/utils");
 
 const { useLogs } = require("../../config.json");
+const { goals } = require("mineflayer-pathfinder");
 
 /**
  * @type {import("../../index").Command}
@@ -83,6 +86,14 @@ module.exports = {
             console.log("target is far");
           } else bot.chat("target is far away");
         }
+      } else if (subCommand === "-patrol") {
+        bot.patrolBot.patrolling = true;
+        await bot.patrolBot.startPatrol();
+      } else if (subCommand === "-kitPvp") {
+        const pos = new Vec3(-1, 67, -52);
+        const goal = new goals.GoalGetToBlock(pos.x, pos.y, pos.z);
+
+        await bot.pathfinder.goto(goal);
       }
     }
   },
