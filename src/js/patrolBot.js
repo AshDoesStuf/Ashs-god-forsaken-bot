@@ -2,6 +2,7 @@ const { goals } = require("mineflayer-pathfinder");
 const { Timer, bestPlayerFilter } = require("./utils");
 const Vec3 = require("vec3").Vec3;
 const fs = require("fs");
+const path = require("path");
 
 const sleep = (ms = 2000) => {
   return new Promise((r) => {
@@ -11,6 +12,9 @@ const sleep = (ms = 2000) => {
 
 class PatrolBot {
   constructor(bot) {
+    /**
+     * @type {import("mineflayer").Bot}
+     */
     this.bot = bot;
     this.points = [];
     this.patrolling = false;
@@ -118,13 +122,15 @@ class PatrolBot {
 
   savePoints() {
     const jsonData = JSON.stringify(this.points);
+    const filePath = path.join(__dirname, "data.json");
 
-    fs.writeFileSync("data.json", jsonData, "utf8");
+    fs.writeFileSync(filePath, jsonData, "utf8");
     console.log("saved data");
   }
 
   loadPoints() {
-    const data = fs.readFileSync("data.json", "utf8");
+    const filePath = path.join(__dirname, "data.json");
+    const data = fs.readFileSync(filePath, "utf8");
 
     // Parse the JSON data into a JavaScript object
     const dataArray = JSON.parse(data);

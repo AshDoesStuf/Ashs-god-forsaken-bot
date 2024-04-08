@@ -123,8 +123,6 @@ function hasGaps(bot) {
 function hasTotems(bot) {
   const offandSlot = bot.getEquipmentDestSlot("off-hand");
   const slots = bot.inventory.slots;
-  const totem = bot.inventory.items().find((i) => i.name === "totem");
-
   if (slots[offandSlot] && slots[offandSlot].name === "totem_of_undying") {
     return true;
   }
@@ -136,9 +134,7 @@ function hasTotems(bot) {
  * @param {Entity} entity
  */
 function bestPlayerFilter(entity) {
-  return (
-    entity.type === "player"
-  );
+  return entity.type === "player";
 }
 
 /**
@@ -188,10 +184,10 @@ function getDistanceTo(vec1, vec2) {
  * @param {string} data
  */
 function requestData(ws, data) {
-  ws.send({
-    message: "request-data",
+  const request = new SendingData("request", {
     requested: data,
-  });
+  }).toJson();
+  ws.send(request);
 }
 
 /**
@@ -245,10 +241,10 @@ function sortEntityListByDistance(bot, e1, e2) {
 }
 
 /**
- * 
- * @param {import("mineflayer").Bot} bot 
- * @param {Entity} entity 
- * @param {number} vectorLength 
+ *
+ * @param {import("mineflayer").Bot} bot
+ * @param {Entity} entity
+ * @param {number} vectorLength
  */
 function canSeeEntity(bot, entity, vectorLength = 5 / 16) {
   const { height, position } = bot.entity;
@@ -321,5 +317,5 @@ module.exports = {
   equipItemByName,
   remove,
   sortEntityListByDistance,
-  canSeeEntity
+  canSeeEntity,
 };

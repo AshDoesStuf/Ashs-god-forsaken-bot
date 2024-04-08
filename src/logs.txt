@@ -1,9 +1,6 @@
-[10/21/2023, 12:49:03 AM] Message: Event blockUpdate:(275, -59, 101) did not fire within timeout of 5000ms
-Stack Trace: Error: Event blockUpdate:(275, -59, 101) did not fire within timeout of 5000ms
-    at onceWithCleanup (C:\Users\ashpl\Archer\src\node_modules\mineflayer\lib\promise_utils.js:62:26)
-    at placeBlockWithOptions (C:\Users\ashpl\Archer\src\node_modules\mineflayer\lib\plugins\place_block.js:13:36)
+[11/11/2023, 10:25:59 PM] Message: Cannot read properties of null (reading 'displayName')
+Stack Trace: TypeError: Cannot read properties of null (reading 'displayName')
+    at eatGap (C:\Users\ashpl\Archer\src\js\fightBot.js:1760:39)
+    at Fight.runAndEatGap (C:\Users\ashpl\Archer\src\js\fightBot.js:1862:15)
+    at Fight.update (C:\Users\ashpl\Archer\src\js\fightBot.js:1125:16)
     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
-    at async EventEmitter.placeBlock (C:\Users\ashpl\Archer\src\node_modules\mineflayer\lib\plugins\place_block.js:33:5)
-    at async Fight.placeObstacle (C:\Users\ashpl\Archer\src\js\fightBot.js:2234:13)
-    at async attk (C:\Users\ashpl\Archer\src\js\fightBot.js:488:17)
-    at async Timeout.loop [as _onTimeout] (C:\Users\ashpl\Archer\src\js\fightBot.js:695:7)

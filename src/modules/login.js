@@ -7,7 +7,7 @@ const chalk = require("chalk");
  */
 
 module.exports = (bot) => {
-  bot.on("messagestr", async (msg) => {
+  bot.on("messagestr", async (msg, pos) => {
     const registerMsg = /PikaNetwork » Please register with \/register .+ .+$/;
     const loginMsg = /PikaNetwork » Please login with \/login .+$/;
     const ultraReg = /Please register using \/register .+ .+$/;
@@ -17,6 +17,21 @@ module.exports = (bot) => {
     const matchLog = loginMsg.test(msg);
     const ultraRegMatch = ultraReg.test(msg);
     const ultraLogMatch = ultraLog.test(msg);
+
+    
+    if (pos === "game_info") {
+      const regex = /Register with \/register <password>/;
+      const regex2 = /Log in with \/login <password>/;
+
+      if (regex.test(msg)) {
+        console.log(`${chalk.bold.green("Succesfuly registerd!")}`);
+      }
+
+      if (regex2.test(msg)) {
+        bot.chat("/login gayman1");
+        console.log(`${chalk.bold.green("Succesfuly loged in!")}`);
+      }
+    }
 
     if (matchReg) {
       bot.chat(`/reg ${password} ${password}`);

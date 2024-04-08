@@ -226,7 +226,7 @@ bot.once("spawn", async () => {
     }
   });
 
-  bot.on("physicTick", () => {
+  bot.on("physicsTick", () => {
     bot.fightBot.updateMainHand();
     bot.fightBot.totemEquip();
     bot.fightBot.update();

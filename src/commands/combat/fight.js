@@ -1,6 +1,6 @@
 // commands/fight.js
 
-const Vec3 = require("vec3").Vec3
+const Vec3 = require("vec3").Vec3;
 
 const {
   bestPlayerFilter,
@@ -17,6 +17,13 @@ module.exports = {
   name: "fight",
   async execute(bot, username, args) {
     const subCommand = args.shift();
+
+    if (!subCommand) {
+      if (useLogs) {
+        console.log("-s, -p [username], -ffa, -a, -patrol, -kitPvp");
+      } else bot.chat("-s, -p [username], -ffa, -a, -patrol, -kitPvp");
+      return;
+    }
 
     if (subCommand.includes("-")) {
       const subCommandArgs = args;
@@ -63,7 +70,7 @@ module.exports = {
         if (bot.fightBot.inBattle) {
           return;
         }
-        console.log("gay")
+        console.log("gay");
         bot.fightBot.ffa = true;
         await bot.fightBot.ffaAttack();
       } else if (subCommand === "-a") {

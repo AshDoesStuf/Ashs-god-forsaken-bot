@@ -4,8 +4,6 @@ const socketIO = require("socket.io");
 const path = require("path");
 const { argv } = require("node:process");
 
-
-
 module.exports = argv;
 const { bot, hitCounter } = require("./bot.js");
 const { hasHealthPotions } = require("./js/utils");

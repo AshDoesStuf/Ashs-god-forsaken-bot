@@ -12,5 +12,6 @@ module.exports = {
     bot.followTarget = null;
     bot.fightBot.stop();
     bot.patrolBot.stop();
+    bot.guardBot.stopGuarding();
   },
 };

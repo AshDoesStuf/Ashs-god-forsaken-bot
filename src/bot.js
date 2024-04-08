@@ -1,6 +1,6 @@
 const mineflayer = require("mineflayer");
-const ReadLn = require("node:readline");
 const Fight = require("./js/fightBot.js");
+const GuardBot = require("./js/guardBot.js");
 const pathfinder = require("mineflayer-pathfinder").pathfinder;
 const chalk = require("chalk");
 const fs = require("fs");
@@ -28,10 +28,10 @@ const PatrolBot = require("./js/patrolBot.js");
 
 const bot = mineflayer.createBot({
   host: info[2] || "localhost",
-  username: "AshLikesFood2",
+  username: "Frisk",
   mainHand: "left",
-  version: "1.8.9",
-  physicsEnabled: true,
+  version: "1.20.1",
+  // physicsEnabled: true,
   port: parseInt(info[3]),
 });
 
@@ -115,6 +115,7 @@ bot.once("spawn", async () => {
 
   bot.fightBot = new Fight(bot);
   bot.patrolBot = new PatrolBot(bot);
+  bot.guardBot = new GuardBot(bot);
   bot.commands = [];
   bot.followTarget = null;
 
@@ -341,6 +342,24 @@ bot.once("spawn", async () => {
 
       bot.fightBot.ffaTarget =
         targets[Math.floor(Math.random() * targets.length)];
+    }
+    if (
+      e.id !== bot.entity.id &&
+      e.id === bot.fightBot.pveTarg?.id &&
+      bot.fightBot.pve
+    ) {
+      try {
+        stop();
+      } catch (error) {
+        // 💀
+      }
+
+      if (bot.guardBot.attackTarget && e.id === bot.guardBot.attackTarget.id) {
+        bot.guardBot.attackTarget = null;
+
+        if (!bot.guardBot.isNearGuardTarget())
+          await bot.guardBot.gotoGuardTarget();
+      }
     }
   });
 

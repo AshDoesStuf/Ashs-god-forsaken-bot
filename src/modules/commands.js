@@ -1,19 +1,21 @@
 const fs = require("fs");
 const { master, prefix } = require("../config.json");
+const path = require("path");
 
 /**
  *
  * @param {import("mineflayer").Bot} bot
  */
 module.exports = (bot) => {
-  const commandFolders = fs.readdirSync("./commands");
+  const filePath = "C:\\Users\\ashpl\\Archer\\src\\commands";
+  const commandFolders = fs.readdirSync(filePath);
 
   for (const folder of commandFolders) {
     const commandFiles = fs
-      .readdirSync(`./commands/${folder}`)
+      .readdirSync(`${filePath}/${folder}`)
       .filter((file) => file.endsWith(".js"));
     for (const file of commandFiles) {
-      const command = require(`../commands/${folder}/${file}`);
+      const command = require(`${filePath}/${folder}/${file}`);
       if (!command) continue;
 
       bot.commands.push(command);
@@ -23,15 +25,31 @@ module.exports = (bot) => {
   bot.on("chat", (username, message) => {
     if (username === bot.username) return;
 
-    if (!message.startsWith(prefix)) return;
-    const args = message.slice(prefix.length).split(" ");
-    const command = bot.commands.find((cm) => cm.name.includes(args[0]));
+    if (!message.startsWith(`${prefix}${bot.username}`)) return;
+    const args = message
+      .slice((prefix + bot.username).length)
+      .trim()
+      .split(" ");
+    const command = bot.commands.find((cm) => cm.name === args[0]);
 
-    if (command && args[0] === command.name && master.includes(username)) {
-      // Remove the command name from the args array
-      args.splice(0, 1);
+    if (!command) return bot.chat(`Unknown command: ${args[0]}`);
 
-      command.execute(bot, username, args);
+    // console.log("Command name", command.name);
+    // console.log(args);
+
+    if (args[0] === command.name && master.includes(username)) {
+      args.shift(); // Remove the command name from the args array
+
+      if (command.args && args.length === 0) {
+        bot.chat(`Usage: ${command.usage}`);
+        return;
+      }
+
+      try {
+        command.execute(bot, username, args);
+      } catch (error) {
+        console.log(error.message);
+      }
     }
   });
 
@@ -47,8 +65,11 @@ module.exports = (bot) => {
     if (args[0] === command.name && master.includes(username)) {
       // Remove the command name from the args array
       args.splice(0, 1);
-
-      command.execute(bot, username, args);
+      try {
+        command.execute(bot, username, args);
+      } catch (error) {
+        console.log(error.message);
+      }
     }
   });
 
@@ -71,7 +92,11 @@ module.exports = (bot) => {
         // Remove the command name from the args array
         args.splice(0, 1);
 
-        command.execute(bot, username, args);
+        try {
+          command.execute(bot, username, args);
+        } catch (error) {
+          console.log(error.message);
+        }
       }
     } else if (kitMatach) {
       const [, username, message] = kitMatach;
@@ -85,7 +110,11 @@ module.exports = (bot) => {
         // Remove the command name from the args array
         args.splice(0, 1);
 
-        command.execute(bot, username, args);
+        try {
+          command.execute(bot, username, args);
+        } catch (error) {
+          console.log(error.message);
+        }
       }
     }
   });
@@ -109,7 +138,11 @@ module.exports = (bot) => {
         // Remove the command name from the args array
         args.splice(0, 1);
 
-        command.execute(bot, username, args);
+        try {
+          command.execute(bot, username, args);
+        } catch (error) {
+          console.log(error.message);
+        }
       }
     }
   });
@@ -133,7 +166,11 @@ module.exports = (bot) => {
         // Remove the command name from the args array
         args.splice(0, 1);
 
-        command.execute(bot, username, args);
+        try {
+          command.execute(bot, username, args);
+        } catch (error) {
+          console.log(error.message);
+        }
       }
     }
   });

@@ -9,7 +9,7 @@
     "start": "node main.js NubPlayzBoi.aternos.me 26216",
     "startChara": "node ./js/chara.js LinkDiscord.aternos.me 15572",
     "lan": "node main.js play.applemc.fun 25565",
-    "link": "node main.js LinkDiscord.aternos.me 15572"
+    "link": "node main.js 0.tcp.eu.ngrok.io 18978"
   },
   "author": "Ash",
   "license": "ISC",
