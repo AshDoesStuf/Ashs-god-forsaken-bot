@@ -1,5 +1,6 @@
 const EventEmitter = require("events");
 const { goals } = require("mineflayer-pathfinder");
+const { MobManager } = require("./Managers.js");
 
 const Entity = require("prismarine-entity").Entity;
 const Vec3 = require("vec3").Vec3;
@@ -36,13 +37,18 @@ class GuardBot extends EventEmitter {
   async startGuarding(target) {
     // If we have nothing to guard then return
     if (!target) return;
+
+    // If the bot is already attacking, don't start guarding
+    if (this.state === "attacking") return;
+
     console.log("Started guarding!");
     this.guardTarget = target;
     this.state = "guarding";
 
     // If we aren't attacking then head to the target
-    if (this.state !== "attacking" && !this.isNearGuardTarget())
+    if (!this.isNearGuardTarget()) {
       await this.gotoGuardTarget();
+    }
   }
 
   stopGuarding() {
@@ -54,12 +60,10 @@ class GuardBot extends EventEmitter {
   async update() {
     if (!this.guardTarget) return;
 
-    // wait untill we reach whatever we were pathing to
+    // If the bot is already pathing, return
     if (this.state === "pathing") return;
 
-    // this means we are already fighting an entity
-    if (this.state === "attacking") return;
-
+    // Check if there is a nearby hostile entity
     const entity = this.bot.nearestEntity(
       (e) =>
         e.type === "hostile" &&
@@ -68,11 +72,25 @@ class GuardBot extends EventEmitter {
 
     if (!entity) return;
 
-    // we attack that entity
+    if (MobManager.isMobTargeted(entity)) return;
+
+    // Stop pathfinding if necessary
+    if (this.state === "pathing") {
+      try {
+        this.bot.pathfinder.setGoal(null);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+
+    if (this.state === "attacking") return;
+
+    // Begin attacking the target
     this.state = "attacking";
     this.attackTarget = entity;
     this.bot.fightBot.safety = true;
     this.bot.fightBot.attackMob(entity);
+    MobManager.TargetedMobs.set(this.bot.username, entity);
     this.emit("guard-start-attack", { target: entity, state: this.state });
   }
 

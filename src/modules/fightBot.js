@@ -1,4 +1,5 @@
 const { useLogs } = require("../config.json");
+const { MobManager, TargetManager } = require("../js/Managers.js");
 const { SendingData } = require("C:\\Users\\ashpl\\AshUtils\\index.js");
 
 /**
@@ -6,9 +7,13 @@ const { SendingData } = require("C:\\Users\\ashpl\\AshUtils\\index.js");
  * @type {import("../index.d.ts").FightModule}
  */
 module.exports = (bot) => {
+  console.log("man i run this hsit");
+  const hiveConfig = bot.hivemind.config;
+  const kings = bot.hivemind.kings;
   bot.on("physicsTick", () => {
     bot.fightBot.update();
     bot.guardBot.update();
+    bot.huntBot.update();
   });
 
   bot.on("messagestr", async (msg) => {
@@ -50,26 +55,6 @@ module.exports = (bot) => {
     }
   });
 
-  // bot.on("hit", () => {
-  //   // bot.fightBot.block();
-  //   hitCounter++;
-  //   if (hitCounter === tempCount + 100 && bot.fightBot.settings.display) {
-  //     bot.chat(`lets goo ${hitCounter} hits`);
-  //     tempCount = hitCounter;
-  //   }
-  // });
-
-  // bot.on("fight-stop", () => {
-  //   if (hitCounter !== 0 && bot.fightBot.settings.display) {
-  //     bot.chat("got: " + hitCounter + " hits in");
-  //     hitCounter = 0;
-  //     tempCount = 0;
-  //   }
-
-  //   hitCounter = 0;
-  //   tempCount = 0;
-  // });
-
   bot.on("death", async () => {
     bot.fightBot.stop();
     bot.clearControlStates();
@@ -88,6 +73,8 @@ module.exports = (bot) => {
     ) {
       bot.fightBot.stop();
       bot.clearControlStates();
+
+      TargetManager.unTargetPlayer(bot.username);
 
       if (useLogs) {
         console.log("target died");
@@ -143,6 +130,10 @@ module.exports = (bot) => {
 
       bot.fightBot.ffaTarget =
         targets[Math.floor(Math.random() * targets.length)];
+    } else if (bot.huntBot.target && e.id === bot.huntBot.target.id) {
+      stop();
+
+      bot.huntBot.stop();
     }
   });
 
@@ -215,6 +206,8 @@ module.exports = (bot) => {
         console.log(error.message);
       }
 
+      MobManager.unTargetMob(e);
+
       if (bot.guardBot.attackTarget && e.id === bot.guardBot.attackTarget.id) {
         bot.guardBot.attackTarget = null;
         bot.guardBot.emit("guard-stop-attack");
@@ -222,10 +215,14 @@ module.exports = (bot) => {
         if (!bot.guardBot.isNearGuardTarget())
           await bot.guardBot.gotoGuardTarget();
       }
+    } else if (bot.huntBot.target && e.id === bot.huntBot.target.id) {
+      stop();
+
+      bot.huntBot.stop();
     }
   });
 
-  bot.on("onCorrelateAttack", async function (attacker, victim, weapon) {
+  bot.on("entityAttack", async function (victim, attacker, weapon) {
     if (victim === bot.entity && bot.fightBot.settings.freeForAll) {
       if (bot.fightBot?.knownSexOffenders?.indexOf(attacker.username) !== -1)
         return;
@@ -246,9 +243,7 @@ module.exports = (bot) => {
         bot.chat("Hey leave my king alone mortal");
 
         bot.fightBot.clear();
-        bot.fightBot.readyUp();
         bot.fightBot.setTarget(attacker.username);
-        bot.fightBot.attack();
       }
     }
 
@@ -272,9 +267,7 @@ module.exports = (bot) => {
           bot.chat("Hey leave my worker alone mortal");
 
           bot.fightBot.clear();
-          bot.fightBot.readyUp();
           bot.fightBot.setTarget(attacker.username);
-          bot.fightBot.attack();
         }
       }
     }
@@ -290,7 +283,6 @@ module.exports = (bot) => {
 
       bot.fightBot.clear();
       bot.fightBot.setTarget(attacker.username);
-      bot.fightBot.attack();
     }
   });
 

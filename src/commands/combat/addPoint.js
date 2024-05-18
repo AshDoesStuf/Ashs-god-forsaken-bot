@@ -4,6 +4,7 @@
 module.exports = {
   name: "addPoint",
   async execute(bot, username, args) {
+    
     const player = bot.players[username];
 
     if (player.entity) {

@@ -1,4 +1,5 @@
 const mineflayer = require("mineflayer");
+const { isPlayerBlocking } = require("../../js/utils.js");
 const sleep = async (ms = 2000) => {
   return new Promise((r) => setTimeout(r, ms));
 };
@@ -12,6 +13,11 @@ module.exports = {
   name: "test",
 
   async execute(bot, username, args) {
-    await bot.fightBot.attempHeal();
+    const nearestEntity = bot.nearestEntity((e) => e.type === "player");
+
+    if (nearestEntity) {
+      console.log(isPlayerBlocking(nearestEntity));
+      
+    }
   },
 };

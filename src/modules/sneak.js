@@ -5,10 +5,10 @@ const mineflayer = require("mineflayer"); // eslint-disable-line
  */
 
 module.exports = (bot) => {
-  bot.on("entityUpdate", (entity) => {
+  bot.on("entityCrouch", (entity) => {
     if (
       entity.type === "player" &&
-      bot.entity.position.distanceTo(entity.position) <= 3
+      bot.entity.position.distanceTo(entity.position) <= 6
     ) {
       const player = bot.players[entity.name];
       if (

@@ -7,14 +7,6 @@ const { getDistance } = require("../js/utils.js");
  */
 module.exports = (bot) => {
   bot.on("physicsTick", async () => {
-    // if (
-    //   bot.health <= 8 &&
-    //   bot.fightBot.settings.requestHelp &&
-    //   bot.fightBot.IsCombat
-    // ) {
-    //   bot.fightBot.requestHelp(ws);
-    // }
-
     if (bot.hivemind !== null) {
       const shouldFollow = bot.hivemind.config.followOwner;
 

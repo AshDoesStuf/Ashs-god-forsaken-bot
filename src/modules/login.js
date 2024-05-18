@@ -18,7 +18,6 @@ module.exports = (bot) => {
     const ultraRegMatch = ultraReg.test(msg);
     const ultraLogMatch = ultraLog.test(msg);
 
-    
     if (pos === "game_info") {
       const regex = /Register with \/register <password>/;
       const regex2 = /Log in with \/login <password>/;

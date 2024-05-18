@@ -22,14 +22,40 @@ module.exports = (bot) => {
     }
   }
 
+  const filePath2  = "C:\\Users\\ashpl\\Archer\\src\\bmcommands";
+  const bmCommandFolders = fs.readdirSync(filePath2);
+  for (const folder of bmCommandFolders) {
+    const commandFiles = fs
+      .readdirSync(`${filePath}/${folder}`)
+      .filter((file) => file.endsWith(".js"));
+    for (const file of commandFiles) {
+      const command = require(`${filePath}/${folder}/${file}`);
+      if (!command) continue;
+
+      bot.bmCommands.push(command);
+    }
+  }
+
+
   bot.on("chat", (username, message) => {
     if (username === bot.username) return;
 
-    if (!message.startsWith(`${prefix}${bot.username}`)) return;
+    if (
+      !message.startsWith(prefix) &&
+      !message.startsWith(`${prefix}${bot.username}`)
+    )
+      return;
+
     const args = message
-      .slice((prefix + bot.username).length)
+      .slice(
+        message.startsWith(prefix + bot.username)
+          ? (prefix + bot.username).length
+          : prefix.length
+      )
       .trim()
       .split(" ");
+    if (args[0] !== bot.username && bot.players[args[0]]) return;
+
     const command = bot.commands.find((cm) => cm.name === args[0]);
 
     if (!command) return bot.chat(`Unknown command: ${args[0]}`);
@@ -39,6 +65,36 @@ module.exports = (bot) => {
 
     if (args[0] === command.name && master.includes(username)) {
       args.shift(); // Remove the command name from the args array
+
+      if (command.args && args.length === 0) {
+        bot.chat(`Usage: ${command.usage}`);
+        return;
+      }
+
+      try {
+        command.execute(bot, username, args);
+      } catch (error) {
+        console.log(error.message);
+      }
+    }
+  });
+
+  //bot mind commands
+  bot.on("chat", async (username, message) => {
+    if (username === bot.username) return;
+
+    if (!message.startsWith("bm!")) return;
+
+    const args = message.slice(prefix.length).trim().split(" ");
+
+    const command = bot.commands.find((cm) => cm.name === args[0]);
+
+    if (!command) return bot.chat(`Unknown command: ${args[0]}`);
+
+    const kings = await bot.bm.getKings();
+
+    if (args[0] === command.name && kings.includes(username)) {
+      args.shift();
 
       if (command.args && args.length === 0) {
         bot.chat(`Usage: ${command.usage}`);
@@ -122,7 +178,7 @@ module.exports = (bot) => {
   //Ultra
   bot.on("messagestr", (msg) => {
     // console.log(msg);
-    const whipserRegex = /MEMBER (\w.+) ➟ (.+)/;
+    const whipserRegex = /^(\w+)\s»\sYou\s»\s(.+)$/;
 
     const match = msg.match(whipserRegex);
 

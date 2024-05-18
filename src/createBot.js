@@ -10,6 +10,7 @@ const movement = require("mineflayer-movement").plugin;
 const minecraftHawkEye = require("minecrafthawkeye");
 const WebSocket = require("ws");
 const { SendingData } = require("C:\\Users\\ashpl\\AshUtils\\index.js");
+const ashloader = require("D:\\Bost\\pathin\\src\\loader.js");
 const { useLogs } = require("./config.json");
 const path = require("path");
 const {
@@ -20,12 +21,9 @@ const {
 } = require("./js/utils.js");
 const { goals } = require("mineflayer-pathfinder");
 const PatrolBot = require("./js/patrolBot.js");
-
-let kings;
-let hiveConfig;
-let id;
-let workers;
-let fileData;
+const HuntBot = require("./js/huntBot.js");
+const botmindapi = require("D:\\Bost\\BotMind\\src\\loader.js");
+const { bloodhound } = require("@miner-org/bloodhound");
 
 async function createBot(
   options = {
@@ -41,38 +39,10 @@ async function createBot(
     bot.loadPlugin(minecraftHawkEye);
     bot.loadPlugin(loader);
     bot.loadPlugin(movement);
-    bloodhoundPlugin(bot);
-
-    const ws = new WebSocket("ws://localhost:8080");
-
-    ws.on("open", () => {
-      console.log(`Bot ${options.username} connected to the WebSocket backend`);
-      bot.ws = ws;
-    });
-
-    ws.on("message", (message) => {
-      console.log(`Bot ${options.username} received message from WebSocket backend:`);
-      try {
-        const data = JSON.parse(message.toString("utf-8"));
-        console.log(data);
-
-        if (data.type && data.type === "important") {
-          kings = data.data.kings;
-        }
-
-        if (data.type === "normal") {
-          if (data.data.config) hiveConfig = data.data.config;
-
-          if (data.data.id) id = data.data.id;
-
-          if (data.data.fileData) fileData = data.data.fileData;
-        } else if (data.type === "workers") {
-          workers = data.data.workers;
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    });
+    bot.loadPlugin(ashloader);
+    bot.loadPlugin(botmindapi);
+    bot.loadPlugin(bloodhound);
+    // bloodhoundPlugin(bot);
 
     bot.on("error", (err) => {
       console.log(`${chalk.bgRed(err.name)}: ${chalk.redBright(err.message)}`);
@@ -96,41 +66,35 @@ async function createBot(
       await bot.waitForChunksToLoad();
 
       bot.setMaxListeners(100);
-      // bot.chat("sup sup chicken butt");
-      const spawnData = new SendingData("normal", {
-        health: bot.health,
-        food: bot.food,
-        type: "fighter",
-        botId: id,
-        name: bot.username,
-      }).toJson();
-      // const spawnData = {
-      //   message: `Bot ${bot.username} connected to ${bot._client.socket._host}`,
-      //   health: bot.health,
-      //   food: bot.food,
-      //   type: "fighter",
-      //   botId: id,
-      //   name: bot.username,
-      // };
 
-      ws.send(spawnData);
+      const spawnData = {
+        message: `Bot ${bot.username} connected to ${bot._client.socket._host}`,
+        type: "fighter",
+        botId: Math.floor(1 + Math.random() * 10),
+        name: bot.username,
+      };
+
+      bot.bm.sendInfo(JSON.stringify(spawnData));
 
       bot.fightBot = new Fight(bot);
       bot.patrolBot = new PatrolBot(bot);
       bot.guardBot = new GuardBot(bot);
+      bot.huntBot = new HuntBot(bot);
       bot.commands = [];
+      bot.bmCommands = [];
       bot.followTarget = null;
       // hive mind shit
       bot.hivemind = {};
-      bot.hivemind.config = hiveConfig;
-      bot.hivemind.workers = workers;
-      bot.hivemind.botId = id;
-      bot.hivemind.kings = kings;
-      bot.hivemind.fileData = fileData;
+      bot.hivemind.config = bot.bm.getConfig();
+      bot.hivemind.kings = bot.bm.getKings();
+      bot.hivemind.botId = spawnData.botId;
       //
 
       const { Default } = bot.movement.goals;
       bot.movement.setGoal(Default);
+
+      bot.bloodhound.yawCorrelation = true;
+
       loadModules(bot);
 
       resolve(bot);

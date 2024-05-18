@@ -5,10 +5,12 @@ const Vec3 = require("vec3").Vec3;
 const {
   bestPlayerFilter,
   sortEntityListByDistance,
+  getClosestPlayer,
 } = require("../../js/utils");
 
 const { useLogs } = require("../../config.json");
 const { goals } = require("mineflayer-pathfinder");
+const { TargetManager } = require("../../js/Managers");
 
 /**
  * @type {import("../../index").Command}
@@ -65,12 +67,11 @@ module.exports = {
 
         bot.fightBot.clear();
         bot.fightBot.setTarget(user);
-        bot.fightBot.attack();
       } else if (subCommand === "-ffa") {
         if (bot.fightBot.inBattle) {
           return;
         }
-        console.log("gay");
+        console.log(`${bot.username} free for all'ing`);
         bot.fightBot.ffa = true;
         await bot.fightBot.ffaAttack();
       } else if (subCommand === "-a") {
@@ -101,6 +102,64 @@ module.exports = {
         const goal = new goals.GoalGetToBlock(pos.x, pos.y, pos.z);
 
         await bot.pathfinder.goto(goal);
+      } else if (subCommand === "-n") {
+        const bots = await bot.bm.getConnectedBots();
+        const botNames = bots.map((obj) => {
+          return obj.name;
+        });
+
+        const nearestPlayer = getClosestPlayer(bot);
+
+        if (TargetManager.isPlayerTargeted(nearestPlayer)) return;
+
+        if (nearestPlayer && !botNames.includes(nearestPlayer.username)) {
+          if (bot.fightBot.inBattle) {
+            return;
+          }
+
+          TargetManager.TargetedPlayers.set(bot.username, nearestPlayer);
+          bot.fightBot.clear();
+          bot.fightBot.setTarget(nearestPlayer.username);
+        }
+      } else if (subCommand === "-t") {
+        /**
+         * username : Team
+         */
+        const teams = bot.teamMap;
+        const botTeam = teams[bot.username];
+
+        if (!botTeam) bot.chat("I aint on a team");
+
+        const opTeamName = args[0];
+        const opTeam = Object.values(bot.teamMap).find(
+          (team) => team.team === opTeamName
+        );
+        const opTeamMembers = opTeam.members;
+        let target = null;
+
+        for (const member of opTeamMembers) {
+          const opPlayer = bot.players[member];
+
+          if (!opPlayer) continue;
+
+          if (TargetManager.isPlayerTargeted(opPlayer)) {
+            continue;
+          }
+
+          if (!opPlayer.entity) continue;
+
+          if (opPlayer.entity.position.distanceTo(bot.entity.position) >= 16)
+            continue;
+
+          target = opPlayer;
+          break;
+        }
+
+        if (!target) return;
+
+        bot.fightBot.clear();
+        bot.fightBot.setTarget(target.username);
+        TargetManager.TargetedPlayers.set(bot.username, target);
       }
     }
   },

@@ -5,17 +5,23 @@ const {
 } = require("mineflayer-pathfinder");
 const fs = require("fs");
 const speeds = require("../speeds.json");
+const weaponBase = require("../weaponBase.json");
 const { Vec3 } = require("vec3");
 const mineflayer = require("mineflayer");
 const {
   Timer,
-  fovFromEntity,
-  generateRandom,
   getKit,
   hasTotems,
   bestPlayerFilter,
   sortEntityListByDistance,
   canSeeEntity,
+  getDistance,
+  between,
+  getSpeed,
+  getItemEnchantments,
+  getNearestPlayers,
+  isPlayerBlocking,
+  getBestWeapon,
 } = require("./utils");
 const sleep = (ms = 2000) => {
   return new Promise((r) => setTimeout(r, ms));
@@ -52,9 +58,11 @@ class Fight {
       display: false, // Display chat messages like hits
       persistant: false,
       freeForAll: false,
-      critSpam: true,
+      critSpam: false,
       duels: true,
       requestHelp: true,
+      useAxe: false,
+      useSword: true,
     };
     this.strafeStyles = {
       default: true,
@@ -131,9 +139,11 @@ class Fight {
     this.ashtapping = false;
     this.hasGottenKit = false;
     this.inBattle = false;
+    this.isAttacking = false;
     // Ints
     this.maxFollowDistance = 20;
-    this.attackDistnace = 2.9;
+    this.maxAttackDistance = 3;
+    this.minAttackDistance = 0;
     this.maxBowDistance = 35;
     this.debounce = 0.6; //Default;
     this.timeToReachTarg = 0;
@@ -143,6 +153,8 @@ class Fight {
     this.lastHealTime = 0;
     this.distance = 0;
     this.timeSinceLastChug = 0;
+    this.lastAttackTime = 0;
+    this.heldItemCooldown = 0;
 
     this.timeElapsed = 0;
     this.currentTime = 0;
@@ -155,48 +167,15 @@ class Fight {
    * Look at the specified target
    */
   async lookPlayer() {
-    /**
-     * @param {Vec3} targetPos
-     */
-    const customLook = async (targetPos, duration = 10) => {
-      const bot = this.bot;
-      const startPitch = bot.entity.pitch;
-      const startYaw = bot.entity.yaw;
-      const delta = targetPos.minus(
-        bot.entity.position.offset(0, bot.entity.height, 0)
-      );
-      const targetYaw = Math.atan2(-delta.x, -delta.z);
-      const groundDistance = Math.sqrt(delta.x * delta.x + delta.z * delta.z);
-      const targetPitch = Math.atan2(delta.y, groundDistance);
+    if (!this.target_G) return;
 
-      const pitchIncrement = (targetPitch - startPitch) / duration;
-      const yawIncrement = (targetYaw - startYaw) / duration;
+    const currentPosition = this.bot.entity.position;
+    const dx = this.target_G.position.x - currentPosition.x;
+    const dz = this.target_G.position.z - currentPosition.z;
 
-      for (let i = 0; i < duration; i++) {
-        await this.bot.look(
-          startYaw + i * yawIncrement,
-          startPitch + i * pitchIncrement
-        );
-        await new Promise((resolve) => setTimeout(resolve, 1));
-      }
-    };
+    const yaw = Math.atan2(-dx, -dz);
 
-    const look = async () => {
-      if (
-        this.target_G &&
-        this.IsCombat &&
-        !this.placing &&
-        !this.eating &&
-        !this.isShooting &&
-        !this.isPearling &&
-        !this.healing
-      ) {
-        // customLook(this.target_G.position.offset(0, 1.5, 0), 5);
-        this.bot.lookAt(this.target_G.position.offset(0, 1.625, 0));
-      }
-    };
-
-    await look();
+    this.bot.look(yaw, 0, true);
   }
 
   async lookMob() {
@@ -223,6 +202,7 @@ class Fight {
       } else this.bot.chat("go away nerd");
       return;
     }
+
     if (this.bot.players[player]) {
       this.target = player;
       this.target_G = this.bot.players[player]?.entity;
@@ -294,59 +274,59 @@ class Fight {
         }
       }
 
-      if (this.closeToTarg) {
-        if (this.settings.hacker) return;
+      // if (this.closeToTarg) {
+      //   if (this.settings.hacker) return;
 
-        if (!this.target || !this.target_G || this.isPathfinding) return;
+      //   if (!this.target || !this.target_G || this.isPathfinding) return;
 
-        const distance = this.distance;
-        const state = {
-          jump:
-            Math.random() < 0.00255 &&
-            this.isSprinting &&
-            distance <= this.jumpDistance &&
-            !this.placing &&
-            !this.settings.aggressive &&
-            !this.settings.critSpam &&
-            !this.upperCutting,
-          strafeLeft:
-            Math.random() < 0.3 && this.isSprinting && this.bot.entity.onGround,
-          strafeRight:
-            Math.random() < 0.3 && this.isSprinting && this.bot.entity.onGround,
-          nothing: Math.random() < 0.5,
-        };
+      //   const distance = this.distance;
+      //   const state = {
+      //     jump:
+      //       Math.random() < 0.00255 &&
+      //       this.isSprinting &&
+      //       distance <= this.jumpDistance &&
+      //       !this.placing &&
+      //       !this.settings.aggressive &&
+      //       !this.settings.critSpam &&
+      //       !this.upperCutting,
+      //     strafeLeft:
+      //       Math.random() < 0.3 && this.isSprinting && this.bot.entity.onGround,
+      //     strafeRight:
+      //       Math.random() < 0.3 && this.isSprinting && this.bot.entity.onGround,
+      //     nothing: Math.random() < 0.5,
+      //   };
 
-        if (this.strafeStyles.default) {
-          if (state.jump) {
-            this.bot.setControlState("jump", true);
-          } else if (state.strafeLeft) {
-            this.bot.setControlState("left", true);
-            this.bot.setControlState("right", false);
-          } else if (state.strafeRight) {
-            this.bot.setControlState("right", true);
-            this.bot.setControlState("left", false);
-          } else if (state.nothing) {
-            this.bot.setControlState("left", false);
-            this.bot.setControlState("right", false);
-          }
-        } else if (this.strafeStyles.circle) {
-          if (state.jump) {
-            this.bot.setControlState("jump", true);
-          } else if (state.strafeLeft) {
-            this.bot.setControlState("left", true);
-            this.bot.setControlState("right", false);
-          } else if (state.strafeRight) {
-            this.bot.setControlState("right", true);
-            this.bot.setControlState("left", false);
-          } else if (state.nothing) {
-            this.bot.setControlState("left", false);
-            this.bot.setControlState("right", false);
-          }
-        }
-      } else {
-        this.bot.setControlState("left", false);
-        this.bot.setControlState("right", false);
-      }
+      //   if (this.strafeStyles.default) {
+      //     if (state.jump) {
+      //       this.bot.setControlState("jump", true);
+      //     } else if (state.strafeLeft) {
+      //       this.bot.setControlState("left", true);
+      //       this.bot.setControlState("right", false);
+      //     } else if (state.strafeRight) {
+      //       this.bot.setControlState("right", true);
+      //       this.bot.setControlState("left", false);
+      //     } else if (state.nothing) {
+      //       this.bot.setControlState("left", false);
+      //       this.bot.setControlState("right", false);
+      //     }
+      //   } else if (this.strafeStyles.circle) {
+      //     if (state.jump) {
+      //       this.bot.setControlState("jump", true);
+      //     } else if (state.strafeLeft) {
+      //       this.bot.setControlState("left", true);
+      //       this.bot.setControlState("right", false);
+      //     } else if (state.strafeRight) {
+      //       this.bot.setControlState("right", true);
+      //       this.bot.setControlState("left", false);
+      //     } else if (state.nothing) {
+      //       this.bot.setControlState("left", false);
+      //       this.bot.setControlState("right", false);
+      //     }
+      //   }
+      // } else {
+      //   this.bot.setControlState("left", false);
+      //   this.bot.setControlState("right", false);
+      // }
     }
   }
 
@@ -362,18 +342,20 @@ class Fight {
       this.bot.setControlState("jump", false);
     }
 
-    const targetPosition = this.pveTarg.position;
-    const distance = this.bot.entity.position.distanceTo(targetPosition);
+    if (this.pveTarg?.position) {
+      const targetPosition = this.pveTarg.position;
+      const distance = this.bot.entity.position.distanceTo(targetPosition);
 
-    // console.log("here");
-    if (distance > 1.5) {
-      this.bot.setControlState("sprint", true);
-      this.bot.setControlState("forward", true);
-      this.isSprinting = true;
-    } else {
-      this.bot.setControlState("forward", false);
-      this.bot.setControlState("back", true);
-      this.bot.setControlState("back", false);
+      // console.log("here");
+      if (distance > 1.5) {
+        this.bot.setControlState("sprint", true);
+        this.bot.setControlState("forward", true);
+        this.isSprinting = true;
+      } else {
+        this.bot.setControlState("forward", false);
+        this.bot.setControlState("back", true);
+        this.bot.setControlState("back", false);
+      }
     }
   }
 
@@ -382,334 +364,225 @@ class Fight {
   /**
    * The acutally attacking system
    */
+  async attackTick() {
+    if (!this.target_G || this.isAttacking) return;
+    const targetEntity = this.target_G;
 
-  async attack() {
-    this.inBattle = true;
-    const dillyDally = () => {
-      if (this.knownSexOffenders.length <= 1) return;
+    const currentTime = Date.now();
+    const timeSinceLastAttack = currentTime - this.lastAttackTime;
 
-      if (!this.IsCombat) return;
+    if (timeSinceLastAttack >= this.heldItemCooldown) {
+      this.lastAttackTime = currentTime;
+      this.isAttacking = true;
 
-      let randomIdiot = null;
-      if (Math.random() < 0.3) {
-        randomIdiot = this.bot.nearestEntity(bestPlayerFilter);
-      } else {
-        randomIdiot =
-          this.knownSexOffenders[
-            Math.floor(Math.random() * this.knownSexOffenders.length)
-          ];
+      const currentPosition = this.bot.entity.position;
+      const targetPosition = this.target_G.position;
+
+      const distance = getDistance(currentPosition, targetPosition);
+
+      if (distance < this.maxFollowDistance) {
+        if (this.isShooting) {
+          this.bot.hawkEye.stop();
+          this.isShooting = false;
+        }
+
+        this.IsCombat = true;
+
+        // melee combat
+        if (
+          between(distance, this.minAttackDistance, this.maxAttackDistance) &&
+          !this.eating &&
+          !this.isHungry &&
+          !this.placing &&
+          !this.blocking &&
+          !this.gettingReady &&
+          !this.healing
+        ) {
+          this.closeToTarg = true;
+          this.performAttack();
+        } else this.closeToTarg = false;
       }
-
-      this.target = randomIdiot;
-      this.target_G = this.bot.players[randomIdiot]?.entity;
-    };
-
-    const attk = async () => {
-      const targetEntity = this.target_G;
-      if (
-        targetEntity &&
+      // range combat
+      else if (
+        this.distance > this.maxFollowDistance &&
         !this.eating &&
         !this.isHungry &&
-        !this.placing &&
-        !this.blocking &&
+        !this.isPathfinding &&
+        !this.isPearling &&
         !this.gettingReady &&
-        !this.healing
+        !this.placing
       ) {
+        const pearl = this.bot.inventory
+          .items()
+          .find((i) => i.name === "ender_pearl");
+        const bow = this.bot.inventory.items().find((i) => i.name === "bow");
+        const arrow = this.bot.inventory
+          .items()
+          .find((i) => i.name === "arrow");
+
+        if (this.IsCombat) {
+          this.bot.clearControlStates();
+          this.IsCombat = false;
+        }
+
+        const weapon = "bow";
+
         if (
-          this.distance < this.maxFollowDistance &&
-          this.targetAbove3 &&
-          this.hasRangedWeapon() &&
-          !this.isShooting
+          pearl &&
+          this.bot.health > 14 &&
+          !this.isPearling &&
+          !this.isPathfinding &&
+          !this.gettingReady
         ) {
-          const arrow = this.bot.inventory
-            .items()
-            .find((i) => i.name === "arrow");
-          if (!arrow) return;
-
-          if (this.IsCombat) {
-            this.IsCombat = false;
-          }
-
           if (this.isShooting) {
             this.bot.hawkEye.stop();
             this.isShooting = false;
           }
+          this.isPathfinding = true;
+          this.isPearling = true;
 
-          const weapon = "bow";
+          this.bot.clearControlStates();
 
+          const shot = this.bot.hawkEye.getMasterGrade(
+            targetEntity,
+            new Vec3(0, 0.05, 0),
+            "ender_pearl"
+          );
+
+          try {
+            if (shot) {
+              await this.bot.look(shot.yaw, shot.pitch);
+              await sleep(10);
+              await this.bot.equip(pearl, "hand");
+              await sleep(300);
+              this.bot.activateItem();
+            } else {
+              this.bot.hawkEye.oneShot(targetEntity, "ender_pearl");
+            }
+
+            await this.waitForPearl();
+            this.isPearling = false;
+            this.isPathfinding = false;
+          } catch (err) {
+            this.isPearling = false;
+            this.isPathfinding = false;
+            // this.bot.chat("could not throw pearl");
+            this.logError(err);
+          }
+        } else if (bow && arrow && !this.isShooting) {
           this.bot.clearControlStates();
           this.bot.hawkEye.autoAttack(targetEntity, weapon);
           this.isShooting = true;
-        }
-
-        // Sword combat
-        if (this.distance < this.maxFollowDistance) {
+        } else if (!arrow || this.distance > this.maxBowDistance) {
           if (this.isShooting) {
             this.bot.hawkEye.stop();
             this.isShooting = false;
           }
 
-          this.IsCombat = true;
+          this.isPathfinding = true;
 
-          //Inner sword combat
-          if (between(this.distance, 0, this.attackDistnace) && this.IsCombat) {
-            this.closeToTarg = true;
-            let shouldPlace = false;
-
-            if (this.settings.aggressive) {
-              shouldPlace = Math.random() < 0.8924;
-            }
-
-            // Normal
-            if (this.settingsToggled()) {
-              this.bot.attack(targetEntity);
-              this.bot.setControlState("jump", false);
-              this.stap();
-              this.bot.emit("hit");
-            }
-            // Aggressive
-            else if (this.settings.aggressive) {
-              if (
-                shouldPlace &&
-                targetEntity.onGround &&
-                this.checkForPlacables()
-              ) {
-                this.bot.clearControlStates();
-                this.bot.setControlState("back", true);
-                await sleep(300);
-                this.bot.setControlState("back", false);
-                await this.placeObstacle();
-                await sleep(100);
-                this.bot.setControlState("back", false);
-              }
-
-              if (Math.random() * 5 > 4) {
-                this.uppercut();
-              }
-
-              this.stap("pre");
-              this.bot.attack(targetEntity);
-              if (this.bot.getControlState("jump")) {
-                this.bot.setControlState("jump", false);
-              }
-              this.stap("pre");
-
-              this.bot.emit("hit");
-            }
-            // Crit spam 😞
-            else if (this.settings.critSpam) {
-              this.bot.setControlState("jump", true);
-              if (this.bot.entity.velocity.y < -0.3) {
-                this.bot.setControlState("sprint", false);
-              }
-
-              this.bot.attack(targetEntity);
-              this.bot.emit("hit");
-
-              this.tap();
-              if (this.bot.getControlState("jump")) {
-                this.bot.setControlState("jump", false);
-              }
-            }
-            // Aggressive + FFA
-            else if (this.settings.aggressive && this.settings.freeForAll) {
-              if (
-                shouldPlace &&
-                targetEntity.onGround &&
-                this.checkForPlacables()
-              ) {
-                this.bot.clearControlStates();
-                this.bot.setControlState("back", true);
-                await sleep(300);
-                this.bot.setControlState("back", false);
-                await this.placeObstacle();
-                await sleep(100);
-                this.bot.setControlState("back", false);
-              }
-              this.uppercut();
-              this.bot.attack(targetEntity);
-              this.stap();
-
-              this.bot.emit("hit");
-            } else if (this.settings.hacker) {
-              this.uppercut();
-              this.stap("pre");
-              this.bot.attack(targetEntity);
-              if (this.bot.getControlState("jump")) {
-                this.bot.setControlState("jump", false);
-              }
-              this.stap("pre");
-
-              this.bot.emit("hit");
-            }
-          } else {
-            this.closeToTarg = false;
-          }
-        } //range combat
-        else if (
-          this.distance > this.maxFollowDistance &&
-          !this.eating &&
-          !this.isHungry &&
-          !this.isPathfinding &&
-          !this.isPearling &&
-          !this.gettingReady &&
-          !this.placing
-        ) {
-          const pearl = this.bot.inventory
-            .items()
-            .find((i) => i.name === "ender_pearl");
-          const bow = this.bot.inventory.items().find((i) => i.name === "bow");
-          const arrow = this.bot.inventory
-            .items()
-            .find((i) => i.name === "arrow");
-
-          if (this.IsCombat) {
-            this.bot.clearControlStates();
-            this.IsCombat = false;
-          }
-
-          const weapon = "bow";
-
-          if (
-            pearl &&
-            this.bot.health > 14 &&
-            !this.isPearling &&
-            !this.isPathfinding &&
-            !this.gettingReady
-          ) {
-            if (this.isShooting) {
-              this.bot.hawkEye.stop();
-              this.isShooting = false;
-            }
-            this.isPathfinding = true;
-            this.isPearling = true;
-
-            this.bot.clearControlStates();
-
-            const shot = this.bot.hawkEye.getMasterGrade(
-              targetEntity,
-              new Vec3(0, 0.05, 0),
-              "ender_pearl"
+          try {
+            await this.bot.pathfinder.goto(
+              new GoalFollow(targetEntity, bow && arrow ? 16 : 8)
             );
-
-            try {
-              if (shot) {
-                await this.bot.look(shot.yaw, shot.pitch);
-                await sleep(10);
-                await this.bot.equip(pearl, "hand");
-                await sleep(300);
-                this.bot.activateItem();
-              } else {
-                this.bot.hawkEye.oneShot(targetEntity, "ender_pearl");
-              }
-
-              await this.waitForPearl();
-              this.isPearling = false;
-              this.isPathfinding = false;
-            } catch (err) {
-              this.isPearling = false;
-              this.isPathfinding = false;
-              // this.bot.chat("could not throw pearl");
-              this.logError(err);
-            }
-          } else if (bow && arrow && !this.isShooting) {
-            this.bot.clearControlStates();
-            this.bot.hawkEye.autoAttack(targetEntity, weapon);
-            this.isShooting = true;
-          } else if (!arrow || this.distance > this.maxBowDistance) {
-            if (this.isShooting) {
-              this.bot.hawkEye.stop();
-              this.isShooting = false;
-            }
-
-            this.isPathfinding = true;
-
-            try {
-              await this.bot.pathfinder.goto(
-                new GoalFollow(targetEntity, bow && arrow ? 16 : 8)
-              );
-              this.isPathfinding = false;
-            } catch {
-              this.isPathfinding = false;
-            }
-          } else return;
-        } else {
-          return;
-        }
-      }
-    };
-
-    let switchInterval;
-    const miscCombat = async () => {
-      if (this.settings.critSpam && this.IsCombat) {
-        this.crit();
+            this.isPathfinding = false;
+          } catch {
+            this.isPathfinding = false;
+          }
+        } else return;
       }
 
-      // Check if free-for-all mode is enabled and switch targets every 15 seconds
-      if (this.settings.freeForAll && this.IsCombat) {
-        if (!switchInterval) {
-          switchInterval = setInterval(dillyDally, 15 * 1000);
-        }
-      } else {
-        if (switchInterval) {
-          clearInterval(switchInterval);
-          switchInterval = null;
-        }
-      }
-    };
-
-    if (!this.target && !this.target_G) return;
-
-    this.currentTime = 0;
-    this.startTime = performance.now();
-    await this.equip();
-    this.calcInter = setInterval(() => {
-      this.timeToReachTarg = this.target_G
-        ? timeToReach(
-            this.bot.entity.position,
-            this.target_G?.position,
-            this.bot.entity.velocity
-          )
-        : 0;
-      this.timeElapsed = (performance.now() - this.startTime).toFixed(2);
-      this.currentTime = this.timeElapsed;
-    }, 90);
-
-    const loop = async () => {
-      if (!this.target) return;
-      await attk();
-
-      // 1.8
-      // setTimeout(loop, Math.floor(Math.random() * (100 - 80) + 80));
-
-      // 1.9+
-      setTimeout(loop, this.currentCooldown);
-    };
-
-    loop();
-    this.miscInter = setInterval(miscCombat, 100);
-
-    function between(x, min, max) {
-      return x >= min && x <= max;
+      setTimeout(() => {
+        this.isAttacking = false;
+      }, this.heldItemCooldown);
     }
+  }
 
-    function timeToReach(position1, position2, speed) {
-      // Calculate the distance traveled in each direction
-      const dx = position2.x - position1.x;
-      const dy = position2.y - position1.y;
-      const dz = position2.z - position1.z;
+  async performAttack() {
+    const targetEntity = this.target_G;
 
-      // Calculate the total distance traveled using the formula for
-      // distance in 3 dimensions: sqrt(dx^2 + dy^2 + dz^2)
-      const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
-
-      // Calculate the time it will take to reach the second object
-      // by dividing the distance by the magnitude of the speed vector
-      const time = (distance / speed.norm()).toFixed(2);
-
-      // Return the time
-      return time;
+    if (this.settingsToggled()) {
+      this.bot.attack(targetEntity);
+      this.bot.setControlState("jump", false);
+      this.stap();
+      this.bot.emit("hit");
     }
+    // Aggressive
+    else if (this.settings.aggressive) {
+      if (shouldPlace && targetEntity.onGround && this.checkForPlacables()) {
+        this.bot.clearControlStates();
+        this.bot.setControlState("back", true);
+        await sleep(300);
+        this.bot.setControlState("back", false);
+        await this.placeObstacle();
+        await sleep(100);
+        this.bot.setControlState("back", false);
+      }
+
+      if (Math.random() * 5 > 4) {
+        this.uppercut();
+      }
+
+      this.stap("pre");
+      this.bot.attack(targetEntity);
+      if (this.bot.getControlState("jump")) {
+        this.bot.setControlState("jump", false);
+      }
+      this.stap("pre");
+
+      this.bot.emit("hit");
+    }
+    // Crit spam 😞
+    else if (this.settings.critSpam) {
+      this.bot.setControlState("jump", true);
+      if (this.bot.entity.velocity.y < -0.3) {
+        this.bot.setControlState("sprint", false);
+      }
+
+      this.bot.attack(targetEntity);
+      this.bot.emit("hit");
+
+      this.tap();
+      if (this.bot.getControlState("jump")) {
+        this.bot.setControlState("jump", false);
+      }
+    }
+    // Aggressive + FFA
+    else if (this.settings.aggressive && this.settings.freeForAll) {
+      if (shouldPlace && targetEntity.onGround && this.checkForPlacables()) {
+        this.bot.clearControlStates();
+        this.bot.setControlState("back", true);
+        await sleep(300);
+        this.bot.setControlState("back", false);
+        await this.placeObstacle();
+        await sleep(100);
+        this.bot.setControlState("back", false);
+      }
+      this.uppercut();
+      this.bot.attack(targetEntity);
+      this.stap();
+
+      this.bot.emit("hit");
+    } else if (this.settings.hacker) {
+      this.uppercut();
+      this.stap("pre");
+      this.bot.attack(targetEntity);
+      if (this.bot.getControlState("jump")) {
+        this.bot.setControlState("jump", false);
+      }
+      this.stap("pre");
+
+      this.bot.emit("hit");
+    }
+  }
+
+  async ffaTick() {
+    if (!this.ffa) return;
+
+    const targets = getNearestPlayers(this.bot, 16);
+    const targetEntities = targets
+      .map((player) => player.entity)
+      .sort((a, b) => sortEntityListByDistance(this.bot, a, b));
   }
 
   async ffaAttack() {
@@ -751,7 +624,10 @@ class Fight {
 
         if (this.distance < this.maxFollowDistance) {
           this.IsCombat = true;
-          if (between(this.distance, 0, this.attackDistnace) && this.IsCombat) {
+          if (
+            between(this.distance, 0, this.maxAttackDistance) &&
+            this.IsCombat
+          ) {
             this.closeToTarg = true;
             let shouldPlace = false;
 
@@ -1067,49 +943,26 @@ class Fight {
     });
   }
 
+  calculateHeldItemCooldown() {
+    const heldItem = this.bot.heldItem;
+
+    if (!heldItem) return 1;
+
+    const seconds = getSpeed(heldItem);
+    const cooldown = Math.floor((1 / seconds) * 1000);
+
+    return cooldown;
+  }
+
   async update() {
-    const bot = this.bot;
-    if (this.target_G) {
-      this.lookPlayer();
-      this.followTarget();
-      if (
-        Math.round(this.target_G.position.y - this.bot.entity.position.y) >= 3
-      ) {
-        this.targetAbove3 = true;
-      } else {
-        this.targetAbove3 = false;
-      }
-    }
-
-    if (this.pveTarg) {
-      this.followMob();
-    }
-
+    this.heldItemCooldown = this.calculateHeldItemCooldown();
     this.calculateDistance();
-
-    this.totemEquip();
-    // this.block();
-    try {
-      await this.equip();
-    } catch (error) {
-      console.log(error);
-    }
-
-    this.setPriority();
-    await this.releve();
-    if (bot.heldItem) {
-      this.debounce = this.changeDebounce(bot?.heldItem);
-    } else if (!bot?.heldItem) {
-      this.debounce = this.changeDebounce();
-    }
-
-    await this.runAndEatGap();
-
-    await this.updateMainHand();
-    this.calcTicks(this?.debounce);
-    if (this.IsCombat) {
-      this.timeSinceLastChug++;
-    }
+    this.lookPlayer();
+    this.followTarget();
+    this.attackTick();
+    this.equip();
+    this.updateMainHand();
+    this.runAndEatGap();
   }
 
   async testMovement() {
@@ -1538,7 +1391,7 @@ class Fight {
    */
 
   stop() {
-    this.attackDistnace = 2.8;
+    this.maxAttackDistance = 3;
     this.target = null;
     this.targets = [];
     this.IsCombat = false;
@@ -1564,6 +1417,7 @@ class Fight {
     this.upperCutting = false;
     this.healing = false;
     this.ffa = false;
+    this.isAttacking = false;
     // --------------------
     this.bot.clearControlStates();
     this.bot.hawkEye.stop();
@@ -1592,6 +1446,7 @@ class Fight {
     this.timeElapsed = 0;
     this.startTime = 0;
     this.lastHealTime = 0;
+    this.lastAttackTime = 0;
     this.bot.emit("fight-stop");
   }
 
@@ -1840,13 +1695,10 @@ class Fight {
         }
       };
 
-      if (this.bot.health <= 15) {
-        await eatGap();
-      }
-
-      if (this.bot.food <= 16) {
-        await autoEat();
-      }
+      await Promise.all([
+        this.bot.health <= 15 && eatGap(),
+        this.bot.food <= 16 && autoEat(),
+      ]);
     } catch (err) {
       this.logError(err);
     }
@@ -2118,78 +1970,56 @@ class Fight {
   }
 
   async updateMainHand() {
-    if (this.healing) return;
-
-    if (this.eating) return;
-
-    const sword = this.bot.inventory
-      .items()
-      .filter((i) => i.name.includes("sword"))
-      .sort((a, b) => (a.name < b.name ? -1 : 1))[0];
-
-    const trident = this.bot.inventory
-      .items()
-      .find((i) => i.name.includes("trident"));
-
-    const axe = this.bot.inventory
-      .items()
-      .filter((i) => i.name.includes("axe"))
-      .sort((a, b) => (a.name < b.name ? -1 : 1))[0];
-
-    const bow = this.bot.inventory
-      .items()
-      .filter((i) => i.name.includes("axe"))
-      .sort((a, b) => (a.name < b.name ? -1 : 1))[0];
-
-    const crossbow = this.bot.inventory
-      .items()
-      .filter((i) => i.name.includes("crossbow"))
-      .sort((a, b) => (a.name < b.name ? -1 : 1))[0];
-
+    const bot = this.bot;
     if (
-      !this.isShooting &&
-      !this.eating &&
-      !this.isHungry &&
-      !this.placing &&
-      !this.isPearling &&
-      !this.gettingReady &&
-      !this.isPathfinding
+      this.healing ||
+      (this.isShooting &&
+        this.eating &&
+        this.isHungry &&
+        this.placing &&
+        this.isPearling &&
+        this.gettingReady &&
+        this.isPathfinding)
     ) {
-      // If has both weapons choose sword
-      try {
-        if (trident && sword) {
-          await this.bot.equip(sword, "hand");
-        } else if (axe && !sword && !trident) {
-          await this.bot.equip(axe, "hand");
-        } else if (!trident && sword) {
-          await this.bot.equip(sword, "hand");
-        } else if (trident && !sword) {
-          await this.bot.equip(trident, "hand");
-        } else if (trident && sword && axe) {
-          await this.bot.equip(sword, "hand");
-        } else if (axe && sword) {
-          await this.bot.equip(sword, "hand");
-        } else if (!sword && axe) {
-          await this.bot.equip(axe, "hand");
-        } else {
-          return;
-        }
-      } catch (e) {
-        console.log(e.message);
-      }
-    } else if (this.archerTarget && !this.isShooting) {
-      try {
-        if (bow && crossbow) {
-          await this.bot.equip(bow);
-        } else if (bow) {
-          await this.bot.equip(bow);
-        } else if (crossbow) {
-          await this.bot.equip(crossbow);
-        }
-      } catch (er) {
-        console.log(er.message);
-      }
+      return;
     }
+
+    if (!this.settings.useAxe && !this.settings.useSword) {
+      return;
+    }
+
+    if (this.target_G && isPlayerBlocking(this.target_G)) {
+      const unsortedItems = bot.inventory
+        .items()
+        .filter((item) => item.name.includes("axe"));
+      const bestSword = getBestWeapon(unsortedItems);
+
+      if (!bestSword) return;
+
+      if (bot.heldItem && bot.heldItem === bestSword) return;
+
+      await bot.equip(bestSword);
+      return;
+    }
+
+    let unsortedItems;
+    if (this.settings.useSword) {
+      unsortedItems = bot.inventory
+        .items()
+        .filter((item) => item.name.includes("sword"));
+    } else if (this.settings.useAxe) {
+      unsortedItems = bot.inventory
+        .items()
+        .filter((item) => item.name.includes("axe"));
+    }
+
+    const bestSword = getBestWeapon(unsortedItems);
+
+    if (!bestSword) return;
+
+    if (bot.heldItem && bot.heldItem === bestSword) return;
+
+    await bot.equip(bestSword);
   }
 
   calculateDistance() {
@@ -2508,10 +2338,10 @@ class Fight {
     return parseFloat(randomValue);
   }
 
-  setSettings(setting) {
+  setSettings(setting, value) {
     if (setting in this.settings) {
-      this.settings[setting] = !this.settings[setting];
-      this.bot.chat(`${this.settings[setting]}`);
+      this.settings[setting] = value;
+      this.bot.chat(`Set ${setting} to ${value} `);
     } else this.bot.chat("unknown setting");
   }
 

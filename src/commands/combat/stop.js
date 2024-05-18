@@ -10,8 +10,15 @@ module.exports = {
     bot.clearControlStates();
 
     bot.followTarget = null;
-    bot.fightBot.stop();
-    bot.patrolBot.stop();
-    bot.guardBot.stopGuarding();
+    try {
+      bot.fightBot.stop();
+      bot.patrolBot.stop();
+      bot.guardBot.stopGuarding();
+      bot.huntBot.stop();
+      bot.pathfinder.setGoal(null);
+      bot.pathfinder.stop();
+    } catch (error) {
+      console.log(error);
+    }
   },
 };

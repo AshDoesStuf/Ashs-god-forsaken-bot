@@ -16,7 +16,7 @@ class PatrolBot {
      * @type {import("mineflayer").Bot}
      */
     this.bot = bot;
-    this.points = [];
+    this.points = { [bot.username]: [] };
     this.patrolling = false;
     this.lastPoint = null;
     this.target = null;
@@ -24,32 +24,34 @@ class PatrolBot {
   }
 
   addPoint(pos) {
-    if (this.points.includes(pos)) {
+    if (this.points[this.bot.username].includes(pos)) {
       console.log("Already a point there1");
       return;
     }
 
-    this.points.push(pos);
+    this.points[this.bot.username].push(pos);
     console.log("point added");
   }
 
   removePoint(point) {
-    for (let i = this.points.length - 1; i >= 0; i--) {
-      if (this.points[i] === point) {
-        this.points.splice(i, 1);
+    const points = this.points[this.bot.username];
+    for (let i = points.length - 1; i >= 0; i--) {
+      if (points[i] === point) {
+        this.points[this.bot.username].splice(i, 1);
       }
     }
   }
 
   async startPatrol() {
     if (this.patrolling) {
-      if (this.points.length === 0) {
+      const points = this.points[this.bot.username];
+      if (points.length === 0) {
         console.log("[PATROL]: Please set points!");
         return;
       }
 
-      for (let i = 0; i < this.points.length; i++) {
-        const point = this.points[i];
+      for (let i = 0; i < points.length; i++) {
+        const point = points[i];
         this.lastPoint = point;
         const distanceTo = this.bot.entity.position.distanceTo(point);
 
@@ -84,7 +86,7 @@ class PatrolBot {
             }
 
             if (
-              this.bot.players[target.username].gamemode !== 0 ||
+              this.bot.players[target.username].gamemode !== 0 &&
               this.bot.players[target.username].gamemode !== 2
             ) {
               console.log(
@@ -121,23 +123,35 @@ class PatrolBot {
   }
 
   savePoints() {
-    const jsonData = JSON.stringify(this.points);
-    const filePath = path.join(__dirname, "data.json");
+    const jsonData = JSON.stringify(this.points[this.bot.username]);
+    const filePath = path.join(__dirname, "patrolPoints.json");
 
-    fs.writeFileSync(filePath, jsonData, "utf8");
+    const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
+
+    if (data[this.bot.username]) {
+      data[this.bot.username] = jsonData;
+    }
+
+    fs.writeFileSync(filePath, JSON.stringify(data), "utf8");
     console.log("saved data");
   }
 
   loadPoints() {
-    const filePath = path.join(__dirname, "data.json");
+    const filePath = path.join(__dirname, "patrolPoints.json");
     const data = fs.readFileSync(filePath, "utf8");
 
-    // Parse the JSON data into a JavaScript object
-    const dataArray = JSON.parse(data);
-    for (const point of dataArray) {
-      this.points.push(new Vec3(point.x, point.y, point.z));
+    const dataJson = JSON.parse(data);
+    // console.log(dataJson);
+
+    if (dataJson[this.bot.username]) {
+      this.points = {
+        [this.bot.username]: dataJson[this.bot.username],
+      };
+
+      console.log(
+        `Loaded all ${this.points[this.bot.username].length} points!`
+      );
     }
-    console.log(`Loaded all ${this.points.length} points!`);
   }
 }
 

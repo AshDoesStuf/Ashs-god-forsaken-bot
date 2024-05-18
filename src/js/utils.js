@@ -2,6 +2,7 @@ const { Vec2 } = require("minecrafthawkeye");
 const { Vec3 } = require("vec3");
 const WebSocket = require("ws");
 const Entity = require("prismarine-entity").Entity;
+const speeds = require("../speeds.json");
 
 class Timer {
   constructor() {
@@ -170,8 +171,27 @@ function getClosestPlayer(bot) {
     (player) => player.entity?.health !== 0
   );
 
+  const survivalPpl = noDeadPpl.filter((player) => player.gamemode === 0);
+
   // Return the closest player (the first player in the sorted array)
-  return noDeadPpl[0];
+  return survivalPpl[0];
+}
+
+/**
+ *
+ * @param {import("mineflayer").Bot} bot
+ * @param {number} range
+ */
+function getNearestPlayers(bot, range) {
+  //player array with entities
+  const players = Object.values(bot.players).filter((player) => player.entity);
+
+  const nearestPlayers = players.map((player) => {
+    if (player.entity.position.distanceTo(bot.entity.position) <= range)
+      return player;
+  });
+
+  return nearestPlayers;
 }
 
 function getDistanceTo(vec1, vec2) {
@@ -297,6 +317,75 @@ function canSeeEntity(bot, entity, vectorLength = 5 / 16) {
   return lineOfSight.some((e) => e);
 }
 
+/**
+ * @param {Entity} player
+ */
+function isPlayerBlocking(player) {
+  return (
+    player.metadata[8] === 1 &&
+    player.equipment[1] &&
+    player.equipment[1].name === "shield"
+  );
+}
+
+function between(x, min, max) {
+  return x >= min && x <= max;
+}
+
+function getSpeed(weaponName) {
+  if (!weaponName) return speeds.other;
+
+  return speeds[weaponName.name] || speeds.other;
+}
+
+function getItemEnchantments(item) {
+  if (!item) return [];
+
+  let enchantments = [];
+
+  const itemEnchants = item?.nbt?.value?.Enchantments?.value?.value;
+
+  if (itemEnchants == undefined) return [];
+
+  for (const obj of itemEnchants) {
+    const enchant = {
+      name: obj.id.value,
+      level: obj.lvl.value,
+    };
+
+    enchantments.push(enchant);
+  }
+
+  return enchantments;
+}
+
+function getBestWeapon(items) {
+  if (!items || items.length === 0) return;
+
+  const getItemTotalDamage = (item) => {
+    let totalDamage = weaponBase[item.name] || 0;
+    const enchantments = getItemEnchantments(item);
+
+    for (const enchantment of enchantments) {
+      if (enchantment.name.split(":")[1] === "sharpness") {
+        const enchantDamage = 0.5 * enchantment.level + 0.5;
+        totalDamage += enchantDamage;
+      }
+    }
+
+    return totalDamage;
+  };
+
+  const sortedItems = items.slice().sort((itemA, itemB) => {
+    const damageA = getItemTotalDamage(itemA);
+    const damageB = getItemTotalDamage(itemB);
+
+    return damageB - damageA;
+  });
+
+  return sortedItems[0];
+}
+
 module.exports = {
   Timer,
   getDirection,
@@ -318,4 +407,10 @@ module.exports = {
   remove,
   sortEntityListByDistance,
   canSeeEntity,
+  isPlayerBlocking,
+  between,
+  getSpeed,
+  getItemEnchantments,
+  getNearestPlayers,
+  getBestWeapon,
 };

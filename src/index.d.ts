@@ -1,9 +1,12 @@
 import { Bot } from "mineflayer";
 import GuardBot from "./js/guardBot";
+import HuntBot from "./js/huntBot";
+import BotWebSocketClient from "D:\\Bost\\BotMind\\src\\WSWrapper.js"
 
 declare module "mineflayer" {
   interface Bot {
     guardBot: GuardBot;
+    huntBot: HuntBot
     hivemind: {
       config: object;
       workers: Array<any>?;
@@ -11,6 +14,9 @@ declare module "mineflayer" {
       kings: Array<string>;
       fileData: object;
     };
+    commands: Array<Command>
+    bmCommands: Array<Command>
+    bm: BotWebSocketClient
   }
 }
 
