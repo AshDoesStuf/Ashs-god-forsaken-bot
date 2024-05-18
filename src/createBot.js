@@ -9,8 +9,7 @@ const { loader } = require("@nxg-org/mineflayer-smooth-look");
 const movement = require("mineflayer-movement").plugin;
 const minecraftHawkEye = require("minecrafthawkeye");
 const WebSocket = require("ws");
-const { SendingData } = require("C:\\Users\\ashpl\\AshUtils\\index.js");
-const ashloader = require("D:\\Bost\\pathin\\src\\loader.js");
+const ashloader = require("H:\\Bost\\pathin\\src\\loader.js");
 const { useLogs } = require("./config.json");
 const path = require("path");
 const {
@@ -22,7 +21,7 @@ const {
 const { goals } = require("mineflayer-pathfinder");
 const PatrolBot = require("./js/patrolBot.js");
 const HuntBot = require("./js/huntBot.js");
-const botmindapi = require("D:\\Bost\\BotMind\\src\\loader.js");
+const botmindapi = require("H:\\Bost\\BotMind\\src\\loader.js");
 const { bloodhound } = require("@miner-org/bloodhound");
 
 async function createBot(
@@ -70,7 +69,7 @@ async function createBot(
       const spawnData = {
         message: `Bot ${bot.username} connected to ${bot._client.socket._host}`,
         type: "fighter",
-        botId: Math.floor(1 + Math.random() * 10),
+        botIH: Math.floor(1 + Math.random() * 10),
         name: bot.username,
       };
 
