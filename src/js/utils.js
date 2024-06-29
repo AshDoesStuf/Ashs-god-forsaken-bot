@@ -198,17 +198,6 @@ function getDistanceTo(vec1, vec2) {
   return vec1.distanceTo(vec2);
 }
 
-/**
- *
- * @param {WebSocket} ws
- * @param {string} data
- */
-function requestData(ws, data) {
-  const request = new SendingData("request", {
-    requested: data,
-  }).toJson();
-  ws.send(request);
-}
 
 /**
  *
@@ -401,7 +390,6 @@ module.exports = {
   hasTotems,
   bestPlayerFilter,
   getClosestPlayer,
-  requestData,
   equipItemById,
   equipItemByName,
   remove,
