@@ -1,6 +1,5 @@
 const { useLogs } = require("../config.json");
 const { MobManager, TargetManager } = require("../js/Managers.js");
-const { SendingData } = require("C:\\Users\\ashpl\\AshUtils\\index.js");
 
 /**
  *
@@ -247,30 +246,30 @@ module.exports = (bot) => {
       }
     }
 
-    if (hiveConfig && hiveConfig.defendWorkers) {
-      const requestWorkers = new SendingData("workers").toJson();
-      ws.send(requestWorkers);
+    // if (hiveConfig && hiveConfig.defendWorkers) {
+    //   const requestWorkers = new SendingData("workers").toJson();
+    //   ws.send(requestWorkers);
 
-      await sleep(1000);
+    //   await sleep(1000);
 
-      if (workers.length > 0) {
-        if (bot.fightBot.inBattle) return;
+    //   if (workers.length > 0) {
+    //     if (bot.fightBot.inBattle) return;
 
-        if (
-          workers.includes(victim.username) &&
-          !kings.includes(attacker.username)
-        ) {
-          const distance = bot.entity.position.distanceTo(victim.position);
+    //     if (
+    //       workers.includes(victim.username) &&
+    //       !kings.includes(attacker.username)
+    //     ) {
+    //       const distance = bot.entity.position.distanceTo(victim.position);
 
-          if (distance >= 25) return;
+    //       if (distance >= 25) return;
 
-          bot.chat("Hey leave my worker alone mortal");
+    //       bot.chat("Hey leave my worker alone mortal");
 
-          bot.fightBot.clear();
-          bot.fightBot.setTarget(attacker.username);
-        }
-      }
-    }
+    //       bot.fightBot.clear();
+    //       bot.fightBot.setTarget(attacker.username);
+    //     }
+    //   }
+    // }
 
     if (victim === bot.entity) {
       if (bot.fightBot.inBattle) {

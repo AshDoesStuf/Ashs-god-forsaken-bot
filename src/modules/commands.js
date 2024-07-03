@@ -2,12 +2,14 @@ const fs = require("fs");
 const { master, prefix } = require("../config.json");
 const path = require("path");
 
+const filePath = "./commands";
+const filePath2 = "./bmcommands";
+
 /**
  *
  * @param {import("mineflayer").Bot} bot
  */
 module.exports = (bot) => {
-  const filePath = "C:\\Users\\ashpl\\Archer\\src\\commands";
   const commandFolders = fs.readdirSync(filePath);
 
   for (const folder of commandFolders) {
@@ -22,20 +24,18 @@ module.exports = (bot) => {
     }
   }
 
-  const filePath2  = "C:\\Users\\ashpl\\Archer\\src\\bmcommands";
   const bmCommandFolders = fs.readdirSync(filePath2);
   for (const folder of bmCommandFolders) {
     const commandFiles = fs
-      .readdirSync(`${filePath}/${folder}`)
+      .readdirSync(`${filePath2}/${folder}`)
       .filter((file) => file.endsWith(".js"));
     for (const file of commandFiles) {
-      const command = require(`${filePath}/${folder}/${file}`);
+      const command = require(`${filePath2}/${folder}/${file}`);
       if (!command) continue;
 
       bot.bmCommands.push(command);
     }
   }
-
 
   bot.on("chat", (username, message) => {
     if (username === bot.username) return;
@@ -87,7 +87,7 @@ module.exports = (bot) => {
 
     const args = message.slice(prefix.length).trim().split(" ");
 
-    const command = bot.commands.find((cm) => cm.name === args[0]);
+    const command = bot.bmCommands.find((cm) => cm.name === args[0]);
 
     if (!command) return bot.chat(`Unknown command: ${args[0]}`);
 
