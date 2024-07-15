@@ -142,7 +142,7 @@ class Fight {
     this.isAttacking = false;
     // Ints
     this.maxFollowDistance = 20;
-    this.maxAttackDistance = 3;
+    this.maxAttackDistance = 2.8;
     this.minAttackDistance = 0;
     this.maxBowDistance = 35;
     this.debounce = 0.6; //Default;
@@ -179,17 +179,11 @@ class Fight {
   }
 
   async lookMob() {
-    const look = async () => {
-      if (!this.pveTarg) {
-        return;
-      }
+    if (!this.pveTarg) return;
 
-      await this.bot.lookAt(
-        this.pveTarg.position.offset(0, this.pveTarg.height, 0)
-      );
-    };
-
-    this.lookInter = setInterval(look);
+    await this.bot.lookAt(
+      this.pveTarg.position.offset(0, this.pveTarg.height, 0)
+    );
   }
 
   /**
@@ -218,6 +212,14 @@ class Fight {
 
   async setTargets(targets) {
     this.targets = targets;
+  }
+
+  /**
+   *
+   * @param {Entity} target
+   */
+  setPveTarget(target) {
+    if (target) this.pveTarg = target;
   }
 
   /**
@@ -331,9 +333,8 @@ class Fight {
   }
 
   async followMob() {
-    // console.log("dick")
     if (!this.pveTarg) return;
-    // console.log("weed")
+
     if (this.isShooting) return;
 
     if (this.bot.entity.isCollidedHorizontally && !this.isPathfinding) {
@@ -817,40 +818,16 @@ class Fight {
     return [];
   }
 
-  /**
-   * @param {Entity} target
-   */
-  async attackMob(target) {
-    if (!target) return;
-    this.pve = true;
-    this.pveTarg = target;
+  async attackMob() {
+    if (!this.pveTarg) return;
+    const target = this.pveTarg;
 
-    const loop = async () => {
-      if (!this.safety) return;
+    const currentTime = Date.now();
+    const timeSinceLastAttack = currentTime - this.lastAttackTime;
 
-      const distance = this.bot.entity.position.distanceTo(target.position);
+    const distance = this.bot.entity.position.distanceTo(target.position);
 
-      const distanceY = this.bot.entity.position.y - target.position.y;
-
-      const bow = this.getItemByName("bow");
-      const arrows = this.getItemByName("arrow");
-
-      if (distanceY > 3 && distance < 10 && bow && arrows) {
-        if (this.isShooting) {
-          this.isShooting = false;
-          this.bot.hawkEye.stop();
-        }
-
-        const weapon = "bow";
-
-        if (bow && arrows && !this.isShooting) {
-          this.bot.clearControlStates();
-          this.isShooting = true;
-          this.bot.hawkEye.autoAttack(target, weapon);
-        }
-        return;
-      }
-      // Melee
+    if (timeSinceLastAttack >= this.heldItemCooldown) {
       if (distance < 10 && !this.eating && !this.isHungry) {
         if (between(distance, 0, 3)) {
           if (this.isShooting) {
@@ -858,17 +835,16 @@ class Fight {
             this.bot.hawkEye.stop();
           }
 
+          this.lastAttackTime = currentTime;
+          this.isAttacking = true;
+
           this.bot.attack(target);
         }
       }
-      this.pveInter = setTimeout(loop, this.currentCooldown);
-    };
 
-    await this.lookMob();
-    loop();
-
-    function between(x, min, max) {
-      return x >= min && x <= max;
+      setTimeout(() => {
+        this.isAttacking = false;
+      }, this.heldItemCooldown);
     }
   }
 
@@ -958,270 +934,14 @@ class Fight {
     this.heldItemCooldown = this.calculateHeldItemCooldown();
     this.calculateDistance();
     this.lookPlayer();
+    this.lookMob();
     this.followTarget();
+    this.followMob();
     this.attackTick();
+    this.attackMob();
     this.equip();
     this.updateMainHand();
     this.runAndEatGap();
-  }
-
-  async testMovement() {
-    const bot = this.bot;
-    const blockUnder = getBlockInFrontUnder();
-    const blockFront = getBlockInFront();
-    const blockEyeHeight = getBlockInFrontEye();
-
-    const blockUnderBack = getBlockBehindUnder();
-    const blockBack = getBlockBehind();
-    const blockEyeHeightBack = getBlockBehindEye();
-
-    const blockUnderRight = getBlockRightUnder();
-    const blockRight = getBlockRight();
-    const blockRightEye = getBlockRightEye();
-
-    const blockUnderLeft = getBlockLeftUnder();
-    const blockLeft = getBlockLeft();
-    const blockLeftEye = getBlockLeftEye();
-
-    //bot.setControlState("forward", true);
-    if (
-      blockUnder &&
-      blockUnderBack &&
-      blockUnderRight &&
-      blockUnderLeft &&
-      shouldJumpAcross(
-        blockUnder,
-        blockUnderBack,
-        blockUnderRight,
-        blockUnderLeft,
-        this.direction
-      )
-    ) {
-      bot.clearControlStates();
-      jumpAcross();
-    } else if (
-      blockFront &&
-      blockBack &&
-      blockRight &&
-      blockLeft &&
-      blockEyeHeight &&
-      blockEyeHeightBack &&
-      blockRightEye &&
-      blockLeftEye &&
-      shouldJumpUp(
-        blockFront,
-        blockBack,
-        blockRight,
-        blockLeft,
-        blockEyeHeight,
-        blockEyeHeightBack,
-        blockRightEye,
-        blockLeftEye,
-        this.direction
-      )
-    ) {
-      bot.clearControlStates();
-      jumpUp();
-      return;
-    }
-
-    if (
-      blockEyeHeight &&
-      blockEyeHeight.name.includes("door") &&
-      this.faceDirectionZ === ZDirections.ZPos
-    ) {
-      await openDooria(blockEyeHeight, ZDirections.ZPos);
-    } else if (
-      blockEyeHeightBack &&
-      blockEyeHeightBack.name.includes("door") &&
-      this.faceDirectionZ === ZDirections.ZNega
-    ) {
-      await openDooria(blockEyeHeightBack, ZDirections.ZNega);
-    }
-
-    function shouldJumpAcross(
-      blockUnder,
-      blockUnderBack,
-      blockUnderRight,
-      blockUnderLeft,
-      direction
-    ) {
-      return (
-        (blockUnder.name.includes("air") &&
-          direction === CarinalDirections.south) ||
-        (blockUnderBack.name.includes("air") &&
-          direction === CarinalDirections.north) ||
-        (blockUnderRight.name.includes("air") &&
-          direction === CarinalDirections.west) ||
-        (blockUnderLeft.name.includes("air") &&
-          direction === CarinalDirections.east)
-      );
-    }
-
-    function shouldJumpUp(
-      blockFront,
-      blockBack,
-      blockRight,
-      blockLeft,
-      blockEyeHeight,
-      blockEyeHeightBack,
-      blockRightEye,
-      blockLeftEye,
-      direction
-    ) {
-      return (
-        (!blockFront.name.includes("air") &&
-          blockEyeHeight.name.includes("air") &&
-          direction === CarinalDirections.south) ||
-        (!blockBack.name.includes("air") &&
-          blockEyeHeightBack.name.includes("air") &&
-          direction === CarinalDirections.north) ||
-        (!blockRight.name.includes("air") &&
-          blockRightEye.name.includes("air") &&
-          direction === CarinalDirections.west) ||
-        (!blockLeft.name.includes("air") &&
-          blockLeftEye.name.includes("air") &&
-          direction === CarinalDirections.east)
-      );
-    }
-
-    //#region getBlocks
-    function getBlockInFront() {
-      const blockPos = bot.entity.position.offset(0, 0, 1);
-      const block = bot.blockAt(blockPos);
-      if (block) {
-        return block;
-      }
-      return null;
-    }
-
-    function getBlockInFrontUnder() {
-      const blockPos = bot.entity.position.offset(0, -1, 1);
-      const block = bot.blockAt(blockPos);
-      if (block) {
-        return block;
-      }
-      return null;
-    }
-
-    function getBlockInFrontEye() {
-      const blockPos = bot.entity.position.offset(0, 1, 1);
-      const block = bot.blockAt(blockPos);
-      if (block) {
-        return block;
-      }
-      return null;
-    }
-
-    function getBlockBehind() {
-      const blockPos = bot.entity.position.offset(0, 0, -1);
-      const block = bot.blockAt(blockPos);
-      if (block) {
-        return block;
-      }
-      return null;
-    }
-
-    function getBlockBehindUnder() {
-      const blockPos = bot.entity.position.offset(0, -1, -1);
-      const block = bot.blockAt(blockPos);
-      if (block) {
-        return block;
-      }
-      return null;
-    }
-
-    function getBlockBehindEye() {
-      const blockPos = bot.entity.position.offset(0, 1, -1);
-      const block = bot.blockAt(blockPos);
-      if (block) {
-        return block;
-      }
-      return null;
-    }
-
-    function getBlockLeft() {
-      const blockPos = bot.entity.position.offset(1, 0, 0);
-      const block = bot.blockAt(blockPos);
-      if (block) {
-        return block;
-      }
-      return null;
-    }
-
-    function getBlockLeftUnder() {
-      const blockPos = bot.entity.position.offset(1, -1, 0);
-      const block = bot.blockAt(blockPos);
-      if (block) {
-        return block;
-      }
-      return null;
-    }
-
-    function getBlockLeftEye() {
-      const blockPos = bot.entity.position.offset(1, 1, 0);
-      const block = bot.blockAt(blockPos);
-      if (block) {
-        return block;
-      }
-      return null;
-    }
-
-    function getBlockRight() {
-      const blockPos = bot.entity.position.offset(-1, 0, 0);
-      const block = bot.blockAt(blockPos);
-      if (block) {
-        return block;
-      }
-      return null;
-    }
-
-    function getBlockRightUnder() {
-      const blockPos = bot.entity.position.offset(-1, -1, 0);
-      const block = bot.blockAt(blockPos);
-      if (block) {
-        return block;
-      }
-      return null;
-    }
-
-    function getBlockRightEye() {
-      const blockPos = bot.entity.position.offset(-1, 1, 0);
-      const block = bot.blockAt(blockPos);
-      if (block) {
-        return block;
-      }
-      return null;
-    }
-
-    //#endregion
-    function jumpAcross() {
-      bot.setControlState("sprint", true);
-      bot.setControlState("forward", true);
-      bot.setControlState("jump", true);
-      setTimeout(() => {
-        bot.setControlState("sprint", false);
-        bot.setControlState("forward", false);
-        bot.setControlState("jump", false);
-      }, 150);
-    }
-
-    function jumpUp() {
-      bot.setControlState("jump", true);
-      bot.setControlState("forward", true);
-      setTimeout(() => {
-        bot.setControlState("forward", false);
-        bot.setControlState("jump", false);
-      }, 250);
-    }
-
-    async function openDooria(door, dir) {
-      if (dir === ZDirections.ZNega) {
-        await bot.activateBlock(door, new Vec3(0, 0, -1));
-      } else if (dir === ZDirections.ZPos) {
-        await bot.activateBlock(door, new Vec3(0, 0, 1));
-      }
-    }
   }
 
   /**

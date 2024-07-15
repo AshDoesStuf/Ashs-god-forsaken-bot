@@ -12,11 +12,16 @@ module.exports = (bot) => {
     const loginMsg = /PikaNetwork » Please login with \/login .+$/;
     const ultraReg = /Please register using \/register .+ .+$/;
     const ultraLog = /Please login with the command \/login .+$/;
+    const cubanarchyReg =
+      /Please, register to the server with the command: \/register <password> <ConfirmPassword>/;
+    const cubanarchyLog = /Please, login with the command: \/login <password>/;
 
     const matchReg = registerMsg.test(msg);
     const matchLog = loginMsg.test(msg);
     const ultraRegMatch = ultraReg.test(msg);
     const ultraLogMatch = ultraLog.test(msg);
+    const matchCubaReg = cubanarchyReg.test(msg);
+    const matchCubaLog = cubanarchyLog.test(msg);
 
     if (pos === "game_info") {
       const regex = /Register with \/register <password>/;
@@ -42,6 +47,12 @@ module.exports = (bot) => {
       bot.chat(`/register ${password} ${password}`);
       console.log(`${chalk.bold.green("Succesfuly registerd!")}`);
     } else if (ultraLogMatch) {
+      bot.chat(`/login ${password}`);
+      console.log(`${chalk.bold.green("Succesfuly loged in!")}`);
+    } else if (matchCubaReg) {
+      bot.chat(`/register ${password} ${password}`);
+      console.log(`${chalk.bold.green("Succesfuly registerd!")}`);
+    } else if (matchCubaLog) {
       bot.chat(`/login ${password}`);
       console.log(`${chalk.bold.green("Succesfuly loged in!")}`);
     }

@@ -192,7 +192,16 @@ module.exports = (bot) => {
 
       bot.fightBot.ffaTarget =
         targets[Math.floor(Math.random() * targets.length)];
+    } else if (bot.patrolBot.target && e.id === bot.patrolBot.target.id) {
+      stop();
+
+      bot.patrolBot.target = null;
+      bot.patrolBot.patrolling = true;
+      bot.patrolBot.startPatrol();
     }
+
+
+
     if (
       e.id !== bot.entity.id &&
       e.id === bot.fightBot.pveTarg?.id &&

@@ -26,16 +26,34 @@ const { bloodhound } = require("@miner-org/bloodhound");
 
 async function createBot(
   options = {
-    username: "Frisk",
-    host: "localhost",
-    port: 25565,
+    host: argv[2],
+    port: parseInt(argv[3]),
+    username: usernames[2],
+    version: "1.18.2",
   }
 ) {
   return new Promise(async (resolve, reject) => {
-    const bot = mineflayer.createBot(options);
+    console.log(options)
+    let bot;
+
+    bot = mineflayer.createBot({
+      host: options.host,
+      port: parseInt(options.port),
+      username: options.username,
+      version: options.version,
+    });
+    if (options.fakeHost !== "") {
+      bot = mineflayer.createBot({
+        host: options.host,
+        port: parseInt(options.port),
+        username: options.username,
+        version: options.version,
+        fakeHost: options.fakeHost,
+      });
+    }
 
     bot.loadPlugin(pathfinder);
-    bot.loadPlugin(minecraftHawkEye);
+    bot.loadPlugin(minecraftHawkEye.default);
     bot.loadPlugin(loader);
     bot.loadPlugin(movement);
     bot.loadPlugin(ashloader);
@@ -51,19 +69,17 @@ async function createBot(
 
     bot.on("kicked", (r) => {
       console.log(`Kicked due to ${chalk.green(r)}`);
-      bot.end();
+      bot.end(r);
       return reject();
     });
 
     bot.on("end", (r) => {
       console.log(`Ended due to ${chalk.blue(r)}`);
-      bot.end();
+      bot.end(r);
       return reject();
     });
 
-    bot.once("spawn", async () => {
-      await bot.waitForChunksToLoad();
-
+    bot.once("login", async () => {
       bot.setMaxListeners(100);
 
       const spawnData = {
