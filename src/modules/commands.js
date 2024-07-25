@@ -230,4 +230,33 @@ module.exports = (bot) => {
       }
     }
   });
+
+  //Ultimis
+  bot.on("messagestr", (msg) => {
+    const regex = /\[FRIENDS\] (\w+) ➟ (\w+) » (.+\w+)/;
+    const match = msg.match(regex);
+
+    if (match) {
+      // console.log(match);
+      const [, username, botusername, spacedMessage] = match;
+
+      const message = spacedMessage.replace(/^\s+/, "");
+
+      // console.log(message)
+      if (username === bot.username) return;
+
+      if (!message.startsWith(prefix)) return;
+      const args = message.slice(prefix.length).split(" ");
+      const command = bot.commands.find((cm) => cm.name === args[0]);
+
+      if (!command) return;
+      // bot.whisper(`Unknown command: ${args[0]}`);
+
+      if (args[0] === command.name && master.includes(username)) {
+        args.splice(0, 1);
+
+        command.execute(bot, username, args);
+      }
+    }
+  });
 };

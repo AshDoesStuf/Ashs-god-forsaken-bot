@@ -183,13 +183,17 @@ function getClosestPlayer(bot) {
  * @param {number} range
  */
 function getNearestPlayers(bot, range) {
-  //player array with entities
-  const players = Object.values(bot.players).filter((player) => player.entity);
+  // Filter players to ensure they have an entity
+  const players = Object.values(bot.players)
+    .filter((player) => player.entity)
+    .filter((player) => player !== bot.player);
 
-  const nearestPlayers = players.map((player) => {
-    if (player.entity.position.distanceTo(bot.entity.position) <= range)
-      return player;
-  });
+  //Filter out the bot
+
+  // Find and return the nearest players within the specified range
+  const nearestPlayers = players.filter(
+    (player) => player.entity.position.distanceTo(bot.entity.position) <= range
+  );
 
   return nearestPlayers;
 }
@@ -197,7 +201,6 @@ function getNearestPlayers(bot, range) {
 function getDistanceTo(vec1, vec2) {
   return vec1.distanceTo(vec2);
 }
-
 
 /**
  *

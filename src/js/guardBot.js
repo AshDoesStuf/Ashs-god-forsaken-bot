@@ -85,11 +85,9 @@ class GuardBot extends EventEmitter {
 
     if (this.state === "attacking") return;
 
-    // Begin attacking the target
     this.state = "attacking";
     this.attackTarget = entity;
-    this.bot.fightBot.safety = true;
-    this.bot.fightBot.attackMob(entity);
+    this.bot.fightBot.setPveTarget(entity);
     MobManager.TargetedMobs.set(this.bot.username, entity);
     this.emit("guard-start-attack", { target: entity, state: this.state });
   }
@@ -127,7 +125,11 @@ class GuardBot extends EventEmitter {
 
     const goal = new goals.GoalNear(pos.x, pos.y, pos.z, 1);
     this.state = "pathing";
-    await this.bot.pathfinder.goto(goal);
+    try {
+      await this.bot.pathfinder.goto(goal);
+    } catch (error) {
+      console.log(error.message);
+    }
     this.state = "guarding";
   }
 }

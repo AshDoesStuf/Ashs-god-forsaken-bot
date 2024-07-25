@@ -71,9 +71,10 @@ module.exports = {
         if (bot.fightBot.inBattle) {
           return;
         }
+
         console.log(`${bot.username} free for all'ing`);
         bot.fightBot.ffa = true;
-        await bot.fightBot.ffaAttack();
+        await bot.fightBot.ffaTick()
       } else if (subCommand === "-a") {
         if (bot.fightBot.inBattle) {
           return;

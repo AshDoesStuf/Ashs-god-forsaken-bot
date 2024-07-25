@@ -43,76 +43,62 @@ class PatrolBot {
   }
 
   async startPatrol() {
-    if (this.patrolling) {
-      const points = this.points[this.bot.username];
-      if (points.length === 0) {
-        console.log("[PATROL]: Please set points!");
-        return;
-      }
-
-      for (let i = 0; i < points.length; i++) {
-        const point = points[i];
-        this.lastPoint = point;
-        const distanceTo = this.bot.entity.position.distanceTo(point);
-
-        console.log(`[PATROL]: Going to point ${i + 1}`);
-
-        if (distanceTo > 0.8) {
-          const goal = new goals.GoalNear(point.x, point.y, point.z, 1);
-
-          try {
-            await this.bot.pathfinder.goto(goal);
-          } catch (error) {
-            console.log(error);
-          }
-        }
-
-        let timeElapsed = 0;
-        const attackInterval = 1000;
-
-        while (timeElapsed < 5000) {
-          const target = this.bot.nearestEntity(
-            (e) =>
-              e.type === "player" &&
-              e !== this.bot.entity &&
-              e.position.distanceTo(this.bot.entity.position) <= 16
-          );
-
-          if (target) {
-            console.log("[PATROL]: Target found, attacking...");
-
-            if (this.bot.fightBot.inBattle) {
-              return;
-            }
-
-            if (
-              this.bot.players[target.username].gamemode !== 0 &&
-              this.bot.players[target.username].gamemode !== 2
-            ) {
-              console.log(
-                "[PATROL]: Target is not in survival mode, ignoring..."
-              );
-            } else {
-              this.target = target;
-              this.patrolling = false;
-
-              this.bot.fightBot.clear();
-              this.bot.fightBot.setTarget(target.username);
-              this.bot.fightBot.attack();
-
-              return;
-            }
-          }
-
-          await sleep(attackInterval);
-          timeElapsed += attackInterval;
-        }
-      }
-
-      // After completing the patrol loop, reset 'patrolling' and continue patrolling
-      this.patrolling = true;
-      this.startPatrol();
+    if (!this.patrolling) return;
+    const points = this.points[this.bot.username];
+    if (points.length === 0) {
+      console.log("[PATROL]: Please set points!");
+      return;
     }
+
+    for (let i = 0; i < points.length; i++) {
+      const point = points[i];
+      this.lastPoint = point;
+      const distanceTo = this.bot.entity.position.distanceTo(point);
+
+      console.log(`[PATROL]: Going to point ${i + 1}`);
+
+      if (distanceTo > 0.8) {
+        const goal = new goals.GoalNear(point.x, point.y, point.z, 1);
+
+        try {
+          await this.bot.pathfinder.goto(goal);
+        } catch (error) {
+          console.log(error);
+        }
+      }
+
+      let timeElapsed = 0;
+      const attackInterval = 1000;
+
+      while (timeElapsed < 5000) {
+        const target = this.bot.nearestEntity(
+          (e) =>
+            e.type === "hostile" &&
+            e.position.distanceTo(this.bot.entity.position) <= 16
+        );
+
+        if (target) {
+          console.log("[PATROL]: Target found, attacking...");
+
+          if (this.bot.fightBot.inBattle) {
+            return;
+          }
+
+          this.target = target;
+          this.patrolling = false;
+
+          this.bot.fightBot.setPveTarget(target);
+          return;
+        }
+
+        await sleep(attackInterval);
+        timeElapsed += attackInterval;
+      }
+    }
+
+    // After completing the patrol loop, reset 'patrolling' and continue patrolling
+    this.patrolling = true;
+    this.startPatrol();
   }
 
   stop() {

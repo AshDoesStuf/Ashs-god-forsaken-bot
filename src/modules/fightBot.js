@@ -29,33 +29,18 @@ module.exports = (bot) => {
       bot.fightBot.stop();
       bot.clearControlStates();
     } else if (killer === bot.username) {
-      bot.fightBot.stop();
+      console.log("i merked someone");
+      bot.fightBot.stop({ ffa: true });
       bot.clearControlStates();
     } else if (victim === bot.fightBot.target && !bot.fightBot.ffa) {
+      console.log("pluh");
       bot.fightBot.stop();
       bot.clearControlStates();
-    } else if (
-      victim !== bot.username &&
-      victim === bot.fightBot.target &&
-      bot.fightBot.ffa
-    ) {
-      bot.fightBot.stop();
-      bot.clearControlStates();
-
-      let targets = await bot.fightBot.getFFATargets(
-        (e) =>
-          e !== bot.entity &&
-          e.equipment[4] &&
-          e.equipment[4].name === "diamond_chestplate"
-      );
-
-      bot.fightBot.ffaTarget =
-        targets[Math.floor(Math.random() * targets.length)];
     }
   });
 
   bot.on("death", async () => {
-    bot.fightBot.stop();
+    bot.fightBot.stop({ ffa: true });
     bot.clearControlStates();
     if (useLogs) {
       console.log("i ded lol");
@@ -65,40 +50,7 @@ module.exports = (bot) => {
   });
 
   bot.on("entityDead", async (e) => {
-    if (
-      e.id !== bot.entity.id &&
-      e.id === bot.fightBot.target_G?.id &&
-      !bot.fightBot.ffa
-    ) {
-      bot.fightBot.stop();
-      bot.clearControlStates();
-
-      TargetManager.unTargetPlayer(bot.username);
-
-      if (useLogs) {
-        console.log("target died");
-      } else {
-        bot.chat("gg nerd");
-      }
-
-      console.log(bot.fightBot.targets);
-      if (bot.fightBot.settings.freeForAll && bot.fightBot.targets.length > 0) {
-        if (bot.fightBot.targets.includes(e.username)) {
-          remove(bot.fightBot.targets, e.username);
-        }
-
-        const next = bot.fightBot.targets[0];
-        console.log(next);
-
-        if (next) {
-          bot.fightBot.setTarget(next);
-          bot.fightBot.attack();
-        }
-      }
-    } else if (
-      bot.fightBot.archerTarget &&
-      e.id === bot.fightBot.archerTarget.id
-    ) {
+    if (bot.fightBot.archerTarget && e.id === bot.fightBot.archerTarget.id) {
       stop();
 
       if (useLogs) {
@@ -112,23 +64,6 @@ module.exports = (bot) => {
       bot.patrolBot.target = null;
       bot.patrolBot.patrolling = true;
       bot.patrolBot.startPatrol();
-    } else if (
-      e.id !== bot.entity.id &&
-      e.id === bot.fightBot.target_G?.id &&
-      bot.fightBot.ffa
-    ) {
-      bot.fightBot.stop();
-      bot.clearControlStates();
-
-      let targets = await bot.fightBot.getFFATargets(
-        (e) =>
-          e !== bot.entity &&
-          e.equipment[4] &&
-          e.equipment[4].name === "diamond_chestplate"
-      );
-
-      bot.fightBot.ffaTarget =
-        targets[Math.floor(Math.random() * targets.length)];
     } else if (bot.huntBot.target && e.id === bot.huntBot.target.id) {
       stop();
 
@@ -137,36 +72,7 @@ module.exports = (bot) => {
   });
 
   bot.on("entityGone", async (e) => {
-    if (
-      e.id !== bot.entity.id &&
-      e.id === bot.fightBot.target_G?.id &&
-      !bot.fightBot.ffa
-    ) {
-      stop();
-
-      if (useLogs) {
-        console.log("target left");
-      } else {
-        bot.chat("sure i guess");
-      }
-
-      if (bot.fightBot.settings.freeForAll && bot.fightBot.targets.length > 0) {
-        if (bot.fightBot.targets.includes(e.username)) {
-          remove(bot.fightBot.targets, e.username);
-        }
-
-        const next = bot.fightBot.targets[0];
-        console.log(next);
-
-        if (next) {
-          bot.fightBot.setTarget(next);
-          bot.fightBot.attack();
-        }
-      }
-    } else if (
-      bot.fightBot.archerTarget &&
-      e.id === bot.fightBot.archerTarget.id
-    ) {
+    if (bot.fightBot.archerTarget && e.id === bot.fightBot.archerTarget.id) {
       bot.fightBot.stop();
       bot.clearControlStates();
 
@@ -175,23 +81,6 @@ module.exports = (bot) => {
       } else {
         bot.chat("alright");
       }
-    } else if (
-      e.id !== bot.entity.id &&
-      e.id === bot.fightBot.target_G?.id &&
-      bot.fightBot.ffa
-    ) {
-      bot.fightBot.stop();
-      bot.clearControlStates();
-
-      let targets = await bot.fightBot.getFFATargets(
-        (e) =>
-          e !== bot.entity &&
-          e.equipment[4] &&
-          e.equipment[4].name === "diamond_chestplate"
-      );
-
-      bot.fightBot.ffaTarget =
-        targets[Math.floor(Math.random() * targets.length)];
     } else if (bot.patrolBot.target && e.id === bot.patrolBot.target.id) {
       stop();
 
@@ -199,8 +88,6 @@ module.exports = (bot) => {
       bot.patrolBot.patrolling = true;
       bot.patrolBot.startPatrol();
     }
-
-
 
     if (
       e.id !== bot.entity.id &&

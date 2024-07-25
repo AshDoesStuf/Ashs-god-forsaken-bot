@@ -1,5 +1,6 @@
 {
   "password": "Itsyaboi1",
+  "password2": "iloveskyblock",
   "master": [
     "AshWillFindU",
     "FrostifyZX",
@@ -8,6 +9,10 @@
     "AshLikesFood",
     "BeveledCube",
     "LoliSlayer"
+  ],
+  "friends": [
+    "MonkeBot0",
+    "BeveledCube"
   ],
   "prefix": "f!",
   "useLogs": true
