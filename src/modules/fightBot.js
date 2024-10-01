@@ -15,6 +15,12 @@ module.exports = (bot) => {
     bot.huntBot.update();
   });
 
+  setInterval(async () => {
+    bot.fightBot.updateMainHand();
+    await bot.fightBot.runAndEatGap();
+    bot.fightBot.equip();
+  }, 1000);
+
   bot.on("messagestr", async (msg) => {
     const regex = /(.+) was killed by (.+)/;
     const match = msg.match(regex);

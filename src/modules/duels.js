@@ -3,7 +3,6 @@ const mineflayer = require("mineflayer"); // eslint-disable-line
 /**
  * @param {mineflayer.Bot} bot // to enable intellisense
  */
-
 module.exports = (bot) => {
   const duelRecevive = /^Duel request received from ([A-Za-z0-9]{3,16})/g;
   const duelAccept =
@@ -12,7 +11,7 @@ module.exports = (bot) => {
   const winOrLoseMsg =
     /^\[Duels\] ([A-Za-z0-9]+) \(\d+\) \(\+[0-9-]+\).* has defeated ([A-Za-z0-9]+) \(\d+\) \(\-[0-9-]+\).* on kit ([A-Za-z0-9]+)/;
 
-  let username = ""; // Declare username variable here
+  let username = "";
 
   bot.on("messagestr", async (msg) => {
     const match = msg.match(duelRecevive);
@@ -22,7 +21,7 @@ module.exports = (bot) => {
 
     let kit = "";
     if (match) {
-      username = match[0].replace(duelRecevive, "$1"); // Assign value to username variable here
+      username = match[0].replace(duelRecevive, "$1");
 
       //Accept the request
       bot.chat(`/duel accept ${username}`);
@@ -33,9 +32,9 @@ module.exports = (bot) => {
       console.log(`Kit: ${kit}`);
 
       if (kit === "Sumon") {
-        getReady("Sumo", username); // Pass username as argument to getReady function
+        getReady("Sumo", username);
       } else if (kit === "Neth2") {
-        getReady("Neth", username); // Pass username as argument to getReady function
+        getReady("Neth", username);
       } else if (kit === "Neth") {
         getReady("Neth", username);
       } else if (kit === "AxeUhc") {
@@ -72,29 +71,6 @@ module.exports = (bot) => {
   });
 
   async function getReady(mode = "Neth", username) {
-    // Pass username as parameter to getReady function
-    if (mode === "Neth") {
-      bot.chat("accepted!");
-
-      bot.fightBot.clear();
-      await bot.fightBot.readyUp("duel");
-      await bot.fightBot.setTarget(username);
-      await bot.fightBot.attack();
-    } else if (mode === "Sumo") {
-      bot.chat("accepted!");
-      bot.fightBot.clear();
-      await bot.fightBot.setTarget(username);
-      await bot.fightBot.attack();
-    } else if (mode === "uhc") {
-      bot.chat("accepted!");
-      bot.fightBot.clear();
-      await bot.fightBot.setTarget(username);
-      await bot.fightBot.attack();
-    } else {
-      bot.chat("accepted!");
-      bot.fightBot.clear();
-      await bot.fightBot.setTarget(username);
-      await bot.fightBot.attack();    
-    }
+    bot.fightBot.setTarget(username);
   }
 };

@@ -33,7 +33,7 @@ module.exports = (bot) => {
     const matchUltReg = ultimisReg.test(msg);
     const matchUltLog = ultimisLog.test(msg);
 
-    if (pos === "game_info") {
+    if (pos === "game_info") {kw
       const regex = /Register with \/register <password>/;
       const regex2 = /Log in with \/login <password>/;
 

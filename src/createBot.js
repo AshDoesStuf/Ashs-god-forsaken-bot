@@ -9,7 +9,7 @@ const { loader } = require("@nxg-org/mineflayer-smooth-look");
 const movement = require("mineflayer-movement").plugin;
 const minecraftHawkEye = require("minecrafthawkeye");
 const WebSocket = require("ws");
-const ashloader = require("H:\\Bost\\pathin\\src\\loader.js");
+const ashloader = require("F:\\mineflayer\\mineflayer-baritone\\src\\loader.js");
 const { useLogs } = require("./config.json");
 const path = require("path");
 const {
@@ -21,7 +21,7 @@ const {
 const { goals } = require("mineflayer-pathfinder");
 const PatrolBot = require("./js/patrolBot.js");
 const HuntBot = require("./js/huntBot.js");
-const botmindapi = require("H:\\Bost\\BotMind\\src\\loader.js");
+const botmindapi = require("F:\\mineflayer\\BotMind\\src\\loader.js");
 const { bloodhound } = require("@miner-org/bloodhound");
 
 async function createBot(

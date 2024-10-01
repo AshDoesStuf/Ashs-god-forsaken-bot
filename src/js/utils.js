@@ -3,6 +3,7 @@ const { Vec3 } = require("vec3");
 const WebSocket = require("ws");
 const Entity = require("prismarine-entity").Entity;
 const speeds = require("../speeds.json");
+const weaponBase = require("../weaponBase.json");
 
 class Timer {
   constructor() {
