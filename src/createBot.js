@@ -24,6 +24,7 @@ const HuntBot = require("./js/huntBot.js");
 const botmindapi = require("F:\\mineflayer\\BotMind\\src\\loader.js");
 const { bloodhound } = require("@miner-org/bloodhound");
 
+
 async function createBot(
   options = {
     host: argv[2],
@@ -33,7 +34,7 @@ async function createBot(
   }
 ) {
   return new Promise(async (resolve, reject) => {
-    console.log(options)
+    console.log(options);
     let bot;
 
     bot = mineflayer.createBot({
@@ -52,12 +53,13 @@ async function createBot(
       });
     }
 
+    bot.loadPlugin(botmindapi);
+
     bot.loadPlugin(pathfinder);
     bot.loadPlugin(minecraftHawkEye.default);
     bot.loadPlugin(loader);
     bot.loadPlugin(movement);
     bot.loadPlugin(ashloader);
-    bot.loadPlugin(botmindapi);
     bot.loadPlugin(bloodhound);
     // bloodhoundPlugin(bot);
 
@@ -80,14 +82,20 @@ async function createBot(
     });
 
     bot.once("login", async () => {
+      function generateUniqueId() {
+        return "id-" + Date.now() + "-" + Math.floor(Math.random() * 10000);
+      }
+
       bot.setMaxListeners(100);
 
       const spawnData = {
         message: `Bot ${bot.username} connected to ${bot._client.socket._host}`,
         type: "fighter",
-        botId: Math.floor(1 + Math.random() * 10),
+        botId: generateUniqueId(),
         name: bot.username,
       };
+
+      bot.bmID = spawnData.botId;
 
       bot.bm.sendInfo(JSON.stringify(spawnData));
 
@@ -100,8 +108,8 @@ async function createBot(
       bot.followTarget = null;
       // hive mind shit
       bot.hivemind = {};
-      bot.hivemind.config = bot.bm.getConfig();
-      bot.hivemind.kings = bot.bm.getKings();
+      bot.hivemind.config = await bot.bm.getConfig();
+      bot.hivemind.kings = await bot.bm.getKings();
       bot.hivemind.botId = spawnData.botId;
       //
 
@@ -109,7 +117,6 @@ async function createBot(
       bot.movement.setGoal(Default);
 
       bot.bloodhound.yawCorrelation = true;
-
       loadModules(bot);
 
       resolve(bot);

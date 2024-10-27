@@ -37,44 +37,53 @@ module.exports = (bot) => {
     }
   }
 
-  bot.on("chat", (username, message) => {
+  console.log(`Loaded ${bot.commands.length} commands`);
+
+  bot.on("chat", (username, message, trans, jsonMsg) => {
     if (username === bot.username) return;
+    // console.log(jsonMsg.json.with[1])
 
-    if (
-      !message.startsWith(prefix) &&
-      !message.startsWith(`${prefix}${bot.username}`)
-    )
-      return;
+    if (message.startsWith(`${prefix}${bot.username}`)) {
+      const args = message
+        .slice((prefix + bot.username).length)
+        .trim()
+        .split(" ");
+      const command = bot.commands.find((cm) => cm.name === args[0]);
 
-    const args = message
-      .slice(
-        message.startsWith(prefix + bot.username)
-          ? (prefix + bot.username).length
-          : prefix.length
-      )
-      .trim()
-      .split(" ");
-    if (args[0] !== bot.username && bot.players[args[0]]) return;
+      if (!command) return;
+      // bot.whisper(`Unknown command: ${args[0]}`);
 
-    const command = bot.commands.find((cm) => cm.name === args[0]);
+      // console.log("Command name", command.name);
+      // console.log(args);
 
-    if (!command) return bot.chat(`Unknown command: ${args[0]}`);
+      if (args[0] === command.name && master.includes(username)) {
+        args.shift(); // Remove the command name from the args array
 
-    // console.log("Command name", command.name);
-    // console.log(args);
+        if (command.args && args.length === 0) {
+          // bot.whisper(`Usage: ${command.usage}`);
+          return;
+        }
 
-    if (args[0] === command.name && master.includes(username)) {
-      args.shift(); // Remove the command name from the args array
-
-      if (command.args && args.length === 0) {
-        bot.chat(`Usage: ${command.usage}`);
-        return;
-      }
-
-      try {
         command.execute(bot, username, args);
-      } catch (error) {
-        console.log(error.message);
+      }
+    }
+    // to all bots
+    else if (message.startsWith(`${prefix}`)) {
+      const args = message.slice(prefix.length).trim().split(" ");
+      const command = bot.commands.find((cm) => cm.name === args[0]);
+
+      if (!command) return;
+      // bot.whisper(`Unknown command: ${args[0]}`);
+
+      if (args[0] === command.name && master.includes(username)) {
+        args.shift(); // Remove the command name from the args array
+
+        if (command.args && args.length === 0) {
+          // bot.whisper(`Usage: ${command.usage}`);
+          return;
+        }
+
+        command.execute(bot, username, args);
       }
     }
   });

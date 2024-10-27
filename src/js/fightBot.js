@@ -144,10 +144,9 @@ class Fight {
     this.attackEarly = true;
     // Ints
     this.maxFollowDistance = 20;
-    this.maxAttackDistance = 3;
-    this.minAttackDistance = 0;
+    this.maxAttackDistance = 2.9;
+    this.minAttackDistance = 0.4;
     this.maxBowDistance = 35;
-    this.debounce = 0.6; //Default;
     this.timeToReachTarg = 0;
     this.jumpDistance = 5;
     this.currentCooldown = 0;
@@ -172,12 +171,7 @@ class Fight {
     if (!this.target_G) return;
 
     const currentPosition = this.bot.entity.position;
-    const dx = this.target_G.position.x - currentPosition.x;
-    const dz = this.target_G.position.z - currentPosition.z;
-
-    const yaw = Math.atan2(-dx, -dz);
-
-    await this.bot.lookAt(this.target_G.position.offset(0, 1.6, 0), true);
+    await this.bot.lookAt(this.target_G.position.offset(0.5, 1.6, 0.5), true);
   }
 
   async lookMob() {
@@ -240,10 +234,15 @@ class Fight {
     }
 
     if (this.distance <= this.maxFollowDistance) {
-      this.bot.pathfinder.setGoal(null);
+      try {
+        this.bot.pathfinder.stop();
+        this.bot.pathfinder.setGoal(null);
+      } catch (error) {
+        console.log(error);
+      }
 
       if (this.distance > 1.5) {
-        if (this.wtapping || this.ashtapping || this.stapping) return;
+        if (this.wtapping && this.ashtapping && this.stapping) return;
 
         // Move towards the target
         this.bot.setControlState("sprint", true);
@@ -286,7 +285,7 @@ class Fight {
       if (this.closeToTarg) {
         if (this.settings.hacker) return;
 
-        if (!this.target || !this.target_G || this.isPathfinding) return;
+        if (!this.target && !this.target_G && this.isPathfinding) return;
 
         const distance = this.distance;
         const state = {
@@ -341,7 +340,7 @@ class Fight {
         this.target_G.position.x,
         this.target_G.position.y,
         this.target_G.position.z,
-        this.maxFollowDistance + 2
+        this.maxFollowDistance
       );
 
       try {
@@ -400,8 +399,8 @@ class Fight {
       this.attackEarly && timeSinceLastAttack >= this.heldItemCooldown / 2;
 
     if (
-      timeSinceLastAttack >= this.heldItemCooldown ||
-      (shouldAttackEarly && distance < this.maxAttackDistance)
+      timeSinceLastAttack >= this.heldItemCooldown &&
+      distance < this.maxAttackDistance
     ) {
       this.isAttacking = true;
       this.lastAttackTime = currentTime;
@@ -545,12 +544,9 @@ class Fight {
       //   this.bot.setControlState("back", false);
       // }
 
-      
-       
-      
       this.uppercut();
-      this.stap("pre");
       this.bot.attack(targetEntity);
+      this.stap("pre");
       if (this.bot.getControlState("jump")) {
         this.bot.setControlState("jump", false);
       }
@@ -963,15 +959,18 @@ class Fight {
   }
 
   async update() {
-    this.heldItemCooldown = this.calculateHeldItemCooldown();
-    this.calculateDistance();
-    await this.lookPlayer();
-    this.followTarget();
-    this.attackTick();
-    this.lookMob();
-    this.followMob();
-    this.ffaTick();
-    this.attackMob();
+    // this.heldItemCooldown = this.calculateHeldItemCooldown();
+    // this.calculateDistance();
+    // await this.lookPlayer();
+    // // await this.runAndEatGap();
+    // this.followTarget();
+    // this.attackTick();
+    // this.lookMob();
+    // this.followMob();
+    // this.ffaTick();
+    // this.attackMob();
+    // // this.updateMainHand();
+    // // this.equip();
   }
 
   /**
@@ -1384,6 +1383,9 @@ class Fight {
           } else {
             await this.pearlAway();
           }
+
+          this.bot.clearControlStates();
+          this.bot.setControlState("jump", true);
 
           this.bot.activateItem(true);
           await sleep(1600);

@@ -3,6 +3,7 @@
  */
 module.exports = {
   name: "getKit",
+  description: "Used on pika network",
   execute(bot, username, args) {
     const kit = args[0];
 

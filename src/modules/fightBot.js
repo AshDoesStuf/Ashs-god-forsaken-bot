@@ -15,11 +15,7 @@ module.exports = (bot) => {
     bot.huntBot.update();
   });
 
-  setInterval(async () => {
-    bot.fightBot.updateMainHand();
-    await bot.fightBot.runAndEatGap();
-    bot.fightBot.equip();
-  }, 1000);
+
 
   bot.on("messagestr", async (msg) => {
     const regex = /(.+) was killed by (.+)/;
@@ -178,12 +174,14 @@ module.exports = (bot) => {
         return;
       }
 
+      if (bot.ashpvp.target) return;
+
       if (attacker.username === bot.username) {
         return;
       }
 
-      bot.fightBot.clear();
-      bot.fightBot.setTarget(attacker.username);
+      bot.ashpvp.stop()
+      bot.ashpvp.attack(attacker)
     }
   });
 

@@ -17,6 +17,7 @@ module.exports = {
       bot.huntBot.stop();
       bot.pathfinder.setGoal(null);
       bot.pathfinder.stop();
+      bot.ashpvp.stop()
     } catch (error) {
       console.log(error);
     }

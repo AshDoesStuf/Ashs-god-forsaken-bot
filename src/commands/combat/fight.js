@@ -20,6 +20,7 @@ module.exports = {
   async execute(bot, username, args) {
     const subCommand = args.shift();
 
+
     if (!subCommand) {
       if (useLogs) {
         console.log("-s, -p [username], -ffa, -a, -patrol, -kitPvp");
@@ -67,15 +68,19 @@ module.exports = {
 
         bot.fightBot.clear();
         bot.fightBot.setTarget(user);
-      } else if (subCommand === "-ffa") {
-        if (bot.fightBot.inBattle) {
-          return;
-        }
 
-        console.log(`${bot.username} free for all'ing`);
-        bot.fightBot.ffa = true;
-        await bot.fightBot.ffaTick()
-      } else if (subCommand === "-a") {
+
+        if (subCommandArgs[1] && subCommandArgs[1] === "true") {
+          // enable jumping
+          const fighterBots = await bot.bm.getConnectedFighters();
+        }
+      } 
+      
+      else if (subCommand === "-ffa") {
+        bot.ashpvp.ffa();
+      } 
+      
+      else if (subCommand === "-a") {
         if (bot.fightBot.inBattle) {
           return;
         }
@@ -103,7 +108,10 @@ module.exports = {
         const goal = new goals.GoalGetToBlock(pos.x, pos.y, pos.z);
 
         await bot.pathfinder.goto(goal);
-      } else if (subCommand === "-n") {
+      }
+      
+      
+      else if (subCommand === "-n") {
         const bots = await bot.bm.getConnectedBots();
         const botNames = bots.map((obj) => {
           return obj.name;
@@ -158,8 +166,8 @@ module.exports = {
 
         if (!target) return;
 
-        bot.fightBot.clear();
-        bot.fightBot.setTarget(target.username);
+        bot.ashpvp.stop()
+        bot.ashpvp.attack(target);
         TargetManager.TargetedPlayers.set(bot.username, target);
       }
     }
