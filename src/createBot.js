@@ -23,6 +23,8 @@ const PatrolBot = require("./js/patrolBot.js");
 const HuntBot = require("./js/huntBot.js");
 const botmindapi = require("F:\\mineflayer\\BotMind\\src\\loader.js");
 const { bloodhound } = require("@miner-org/bloodhound");
+const autoEat = require("mineflayer-auto-eat");
+
 
 
 async function createBot(
@@ -54,7 +56,7 @@ async function createBot(
     }
 
     bot.loadPlugin(botmindapi);
-
+   bot.loadPlugin(autoEat.plugin);
     bot.loadPlugin(pathfinder);
     bot.loadPlugin(minecraftHawkEye.default);
     bot.loadPlugin(loader);
@@ -98,6 +100,7 @@ async function createBot(
       bot.bmID = spawnData.botId;
 
       bot.bm.sendInfo(JSON.stringify(spawnData));
+      bot.ashfinder.debug = false;
 
       bot.fightBot = new Fight(bot);
       bot.patrolBot = new PatrolBot(bot);
@@ -117,6 +120,10 @@ async function createBot(
       bot.movement.setGoal(Default);
 
       bot.bloodhound.yawCorrelation = true;
+      bot.autoEat.options.priority = "saturation";
+      bot.autoEat.options.startAt = 17;
+	  bot.autoEat.options.offhand = true;
+      
       loadModules(bot);
 
       resolve(bot);

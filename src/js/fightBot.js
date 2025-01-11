@@ -216,6 +216,7 @@ class Fight {
    */
   setPveTarget(target) {
     if (target) {
+      console.log(target)
       this.pve = true;
       this.pveTarg = target;
     }

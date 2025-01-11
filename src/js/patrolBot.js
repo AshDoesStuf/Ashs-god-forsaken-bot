@@ -20,6 +20,10 @@ class PatrolBot {
     this.patrolling = false;
     this.lastPoint = null;
     this.target = null;
+    this.attackPathing = false;
+    this.attacking = false;
+    this.lastAttackTime = 0;
+
     this.loadPoints();
   }
 
@@ -31,6 +35,7 @@ class PatrolBot {
 
     this.points[this.bot.username].push(pos);
     console.log("point added");
+    this.savePoints();
   }
 
   removePoint(point) {
@@ -47,6 +52,11 @@ class PatrolBot {
     const points = this.points[this.bot.username];
     if (points.length === 0) {
       console.log("[PATROL]: Please set points!");
+      return;
+    }
+
+    if (this.target) {
+      //thens we ins combats
       return;
     }
 
@@ -84,10 +94,10 @@ class PatrolBot {
             return;
           }
 
+          console.log("[PATROL]: Not in combat");
+
           this.target = target;
           this.patrolling = false;
-
-          this.bot.fightBot.setPveTarget(target);
           return;
         }
 
@@ -101,6 +111,65 @@ class PatrolBot {
     this.startPatrol();
   }
 
+  //This will run every tick
+  async attackTarget() {
+    if (!this.target) return;
+
+    if (this.patrolling) return;
+
+    if (this.attackPathing) return;
+
+    if (this.attacking) return;
+
+    const distanceToTarget = this.bot.entity.position.distanceTo(
+      this.target.position
+    );
+
+    if (distanceToTarget > 3) {
+      const goal = new goals.GoalNear(
+        this.target.position.x,
+        this.target.position.y,
+        this.target.position.z,
+        2
+      );
+
+      try {
+        this.attackPathing = true;
+        await this.bot.pathfinder.goto(goal);
+        this.attackPathing = false;
+      } catch (error) {
+        console.log(error);
+        this.attackPathing = false;
+      }
+    }
+
+    const currentTime = Date.now();
+    const timeSinceLastAttack = currentTime - this.lastAttackTime;
+
+    if (
+      timeSinceLastAttack >= this.bot.ashpvp.heldItemCooldown &&
+      this.target !== null
+    ) {
+      this.attacking = true;
+      try {
+        this.bot.attack(this.target);
+      } catch (error) {
+        console.log(error);
+      }
+
+      setTimeout(() => {
+        this.attacking = false;
+      }, this.bot.ashpvp.heldItemCooldown);
+    }
+  }
+
+  resetCombatState() {
+    this.target = null;
+    this.attacking = false;
+    this.attackPathing = false;
+    this.patrolling = true;
+  }
+
   stop() {
     this.patrolling = false;
     this.target = null;
@@ -109,16 +178,20 @@ class PatrolBot {
   }
 
   savePoints() {
-    const jsonData = JSON.stringify(this.points[this.bot.username]);
+    const jsonData = this.points[this.bot.username];
     const filePath = path.join(__dirname, "patrolPoints.json");
 
     const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
 
     if (data[this.bot.username]) {
       data[this.bot.username] = jsonData;
+    } else {
+      data[this.bot.username] = jsonData;
     }
 
-    fs.writeFileSync(filePath, JSON.stringify(data), "utf8");
+    const stringify = JSON.stringify(data);
+
+    fs.writeFileSync(filePath, stringify, "utf8");
     console.log("saved data");
   }
 

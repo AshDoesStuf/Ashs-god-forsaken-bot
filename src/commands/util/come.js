@@ -19,31 +19,38 @@ module.exports = {
       const gotoPos = bot.blockAtEntityCursor(player.entity, 16);
 
       if (gotoPos) {
-        const goal = new goals.GoalNear(
-          gotoPos.position.x,
-          gotoPos.position.y,
-          gotoPos.position.z,
-          1
+        await bot.ashfinder.goto(
+          new Vec3(gotoPos.position.x, gotoPos.position.y, gotoPos.position.z)
         );
 
-        try {
-          await bot.pathfinder.goto(goal);
-        } catch (error) {
-          console.log(error.message);
-        }
+        // const goal = new goals.GoalNear(
+        //   gotoPos.position.x,
+        //   gotoPos.position.y,
+        //   gotoPos.position.z,
+        //   1
+        // );
+
+        // try {
+        //   await bot.pathfinder.goto(goal);
+        // } catch (error) {
+        //   console.log(error.message);
+        // }
       }
     } else if (mode === "pos") {
       const x = parseInt(args[1]);
       const y = parseInt(args[2]);
       const z = parseInt(args[3]);
 
-      const goal = new goals.GoalNear(x, y, z, 1);
+      const position = new Vec3(x, y, z);
+      await bot.ashfinder.goto(position);
 
-      try {
-        await bot.pathfinder.goto(goal);
-      } catch (error) {
-        console.log(error.message);
-      }
+      // const goal = new goals.GoalNear(x, y, z, 1);
+
+      // try {
+      //   await bot.pathfinder.goto(goal);
+      // } catch (error) {
+      //   console.log(error.message);
+      // }
     }
   },
 };

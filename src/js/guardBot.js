@@ -29,6 +29,10 @@ class GuardBot extends EventEmitter {
      * @type {Entity | null}
      */
     this.attackTarget = null;
+
+    this.attackPathing = false;
+
+    this.attacking = false;
   }
 
   /**
@@ -87,9 +91,63 @@ class GuardBot extends EventEmitter {
 
     this.state = "attacking";
     this.attackTarget = entity;
-    this.bot.fightBot.setPveTarget(entity);
     MobManager.TargetedMobs.set(this.bot.username, entity);
     this.emit("guard-start-attack", { target: entity, state: this.state });
+  }
+
+  resetCombatState() {
+    this.attackTarget = null;
+    this.state = "guarding";
+    this.emit("guard-stop-attack");
+  }
+
+  async attackMob() {
+    if (!this.attackTarget) return;
+
+    if (this.attackPathing) return;
+
+    if (this.attacking) return;
+
+    const distanceToTarget = this.bot.entity.position.distanceTo(
+      this.attackTarget.position
+    );
+
+    if (distanceToTarget > 3) {
+      const goal = new goals.GoalNear(
+        this.attackTarget.position.x,
+        this.attackTarget.position.y,
+        this.attackTarget.position.z,
+        2
+      );
+
+      try {
+        this.attackPathing = true;
+        await this.bot.pathfinder.goto(goal);
+        this.attackPathing = false;
+      } catch (error) {
+        console.log(error);
+        this.attackPathing = false;
+      }
+    }
+
+    const currentTime = Date.now();
+    const timeSinceLastAttack = currentTime - this.lastAttackTime;
+
+    if (
+      timeSinceLastAttack >= this.bot.ashpvp.heldItemCooldown &&
+      this.attackTarget !== null
+    ) {
+      this.attacking = true;
+      try {
+        this.bot.attack(this.attackTarget);
+      } catch (error) {
+        console.log(error);
+      }
+
+      setTimeout(() => {
+        this.attacking = false;
+      }, this.bot.ashpvp.heldItemCooldown);
+    }
   }
 
   isNearGuardTarget() {
