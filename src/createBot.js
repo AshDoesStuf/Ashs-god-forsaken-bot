@@ -9,7 +9,7 @@ const { loader } = require("@nxg-org/mineflayer-smooth-look");
 const movement = require("mineflayer-movement").plugin;
 const minecraftHawkEye = require("minecrafthawkeye");
 const WebSocket = require("ws");
-const ashloader = require("F:\\mineflayer\\mineflayer-baritone\\src\\loader.js");
+const ashloader = require("../../mineflayer-baritone/src/loader.js");
 const { useLogs } = require("./config.json");
 const path = require("path");
 const {
@@ -21,11 +21,9 @@ const {
 const { goals } = require("mineflayer-pathfinder");
 const PatrolBot = require("./js/patrolBot.js");
 const HuntBot = require("./js/huntBot.js");
-const botmindapi = require("F:\\mineflayer\\BotMind\\src\\loader.js");
+const botmindapi = require("../../BotMind/src/loader.js");
 const { bloodhound } = require("@miner-org/bloodhound");
 const autoEat = require("mineflayer-auto-eat");
-
-
 
 async function createBot(
   options = {
@@ -56,7 +54,7 @@ async function createBot(
     }
 
     bot.loadPlugin(botmindapi);
-   bot.loadPlugin(autoEat.plugin);
+    bot.loadPlugin(autoEat.plugin);
     bot.loadPlugin(pathfinder);
     bot.loadPlugin(minecraftHawkEye.default);
     bot.loadPlugin(loader);
@@ -122,8 +120,8 @@ async function createBot(
       bot.bloodhound.yawCorrelation = true;
       bot.autoEat.options.priority = "saturation";
       bot.autoEat.options.startAt = 17;
-	  bot.autoEat.options.offhand = true;
-      
+      bot.autoEat.options.offhand = true;
+
       loadModules(bot);
 
       resolve(bot);
