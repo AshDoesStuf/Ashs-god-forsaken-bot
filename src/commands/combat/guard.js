@@ -28,6 +28,14 @@ module.exports = {
       if (!guardBlock) return;
 
       bot.guardBot.startGuarding(guardBlock.position);
+    } else if (mode === "player") {
+      const target = args[0];
+
+      const player = bot.players[target];
+
+      if (!player) return bot.chat("Player not found");
+
+      bot.guardBot.startGuarding(player.entity);
     }
   },
 };

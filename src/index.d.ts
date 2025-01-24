@@ -3,12 +3,15 @@ import GuardBot from "./js/guardBot";
 import HuntBot from "./js/huntBot";
 import BotWebSocketClient from "../../BotMind/src/WSWrapper.js";
 import Fight from "./js/fightBot";
+import AshPvP from "../../ash-pvp/src/pvp.js";
+import { Vec3 } from "vec3";
+import { Entity } from "prismarine-entity";
 
 declare module "mineflayer" {
   interface Bot {
-    fightBot: Fight
+    fightBot: Fight;
     guardBot: GuardBot;
-    huntBot: HuntBot
+    huntBot: HuntBot;
     hivemind: {
       config: object;
       workers: Array<any>?;
@@ -16,9 +19,22 @@ declare module "mineflayer" {
       kings: Array<string>;
       fileData: object;
     };
-    commands: Array<Command>
-    bmCommands: Array<Command>
-    bm: BotWebSocketClient
+    commands: Array<Command>;
+    bmCommands: Array<Command>;
+    bm: BotWebSocketClient;
+    ashpvp: AshPvP;
+    nearestEntities(
+      filter: (entity: Entity) => boolean,
+      limit: number
+    ): Entity[];
+  }
+
+  interface BotEvents {
+    distressSignal: (
+      botId: string,
+      position: Vec3,
+      entities: Array<Entity>
+    ) => void;
   }
 }
 

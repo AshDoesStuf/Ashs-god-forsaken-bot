@@ -66,18 +66,21 @@ async function createBot(
     bot.on("error", (err) => {
       console.log(`${chalk.bgRed(err.name)}: ${chalk.redBright(err.message)}`);
       bot.end();
+      bot.ws.close();
       return reject();
     });
 
     bot.on("kicked", (r) => {
       console.log(`Kicked due to ${chalk.green(r)}`);
       bot.end(r);
+      bot.ws.close();
       return reject();
     });
 
     bot.on("end", (r) => {
       console.log(`Ended due to ${chalk.blue(r)}`);
       bot.end(r);
+      bot.ws.close();
       return reject();
     });
 
@@ -112,6 +115,7 @@ async function createBot(
       bot.hivemind.config = await bot.bm.getConfig();
       bot.hivemind.kings = await bot.bm.getKings();
       bot.hivemind.botId = spawnData.botId;
+      bot.bm.ws.id = bot.bmID;
       //
 
       const { Default } = bot.movement.goals;

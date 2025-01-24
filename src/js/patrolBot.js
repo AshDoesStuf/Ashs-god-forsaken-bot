@@ -3,6 +3,8 @@ const { Timer, bestPlayerFilter } = require("./utils");
 const Vec3 = require("vec3").Vec3;
 const fs = require("fs");
 const path = require("path");
+const { Weapons } = require("minecrafthawkeye");
+const { GoalNear } = require("../../../mineflayer-baritone/src/goal");
 
 const sleep = (ms = 2000) => {
   return new Promise((r) => {
@@ -16,13 +18,20 @@ class PatrolBot {
      * @type {import("mineflayer").Bot}
      */
     this.bot = bot;
+    /**
+     * @type {Object.<string, Vec3[]>}
+     */
     this.points = { [bot.username]: [] };
     this.patrolling = false;
     this.lastPoint = null;
+    /**
+     * @type {import("prismarine-entity").Entity}
+     */
     this.target = null;
     this.attackPathing = false;
     this.attacking = false;
     this.lastAttackTime = 0;
+    this.usingBow = false;
 
     this.loadPoints();
   }
@@ -49,7 +58,9 @@ class PatrolBot {
 
   async startPatrol() {
     if (!this.patrolling) return;
+
     const points = this.points[this.bot.username];
+
     if (points.length === 0) {
       console.log("[PATROL]: Please set points!");
       return;
@@ -63,15 +74,16 @@ class PatrolBot {
     for (let i = 0; i < points.length; i++) {
       const point = points[i];
       this.lastPoint = point;
+      const vec3 = new Vec3(point.x, point.y, point.z);
       const distanceTo = this.bot.entity.position.distanceTo(point);
 
       console.log(`[PATROL]: Going to point ${i + 1}`);
 
       if (distanceTo > 0.8) {
-        const goal = new goals.GoalNear(point.x, point.y, point.z, 1);
+        const goal = new GoalNear(vec3, 1);
 
         try {
-          await this.bot.pathfinder.goto(goal);
+          await this.bot.ashfinder.goto(goal);
         } catch (error) {
           console.log(error);
         }
@@ -90,12 +102,6 @@ class PatrolBot {
         if (target) {
           console.log("[PATROL]: Target found, attacking...");
 
-          if (this.bot.fightBot.inBattle) {
-            return;
-          }
-
-          console.log("[PATROL]: Not in combat");
-
           this.target = target;
           this.patrolling = false;
           return;
@@ -104,6 +110,8 @@ class PatrolBot {
         await sleep(attackInterval);
         timeElapsed += attackInterval;
       }
+
+      console.log("[PATROL]: No target found, moving to next point...");
     }
 
     // After completing the patrol loop, reset 'patrolling' and continue patrolling
@@ -111,7 +119,7 @@ class PatrolBot {
     this.startPatrol();
   }
 
-  //This will run every tick
+  //This will run every minecraft tick
   async attackTarget() {
     if (!this.target) return;
 
@@ -120,6 +128,24 @@ class PatrolBot {
     if (this.attackPathing) return;
 
     if (this.attacking) return;
+
+    //use bows cuz we are cool and phantoms are annoying
+    if (
+      this.target.name === "phantom" &&
+      this.bot.inventory.items().find((item) => item.name.includes("bow")) &&
+      this.bot.inventory.items().find((item) => item.name.includes("arrow")) &&
+      !this.usingBow
+    ) {
+      this.usingBow = true;
+
+      await this.bot.equip(
+        this.bot.inventory.items().find((item) => item.name.includes("bow")),
+        "hand"
+      );
+
+      this.bot.hawkEye.oneShot(this.target, Weapons.bow);
+      return;
+    }
 
     const distanceToTarget = this.bot.entity.position.distanceTo(
       this.target.position

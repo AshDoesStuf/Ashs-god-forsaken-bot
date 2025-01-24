@@ -2,8 +2,8 @@ const fs = require("fs");
 const { master, prefix } = require("../config.json");
 const path = require("path");
 
-const filePath = "F:\\mineflayer\\archer\\src\\commands";
-const filePath2 = "F:\\mineflayer\\archer\\src\\bmcommands";
+const filePath = "/home/ekcrossna/Desktop/mineflayer/archer/src/commands";
+const filePath2 = "/home/ekcrossna/Desktop/mineflayer/archer/src/bmcommands";
 
 /**
  *
