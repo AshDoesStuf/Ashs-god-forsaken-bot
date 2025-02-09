@@ -8,12 +8,10 @@
     "MajorGalu",
     "AshLikesFood",
     "BeveledCube",
-    "LoliSlayer"
+    "LoliSlayer",
+    "FrostifyX2"
   ],
-  "friends": [
-    "MonkeBot0",
-    "BeveledCube"
-  ],
+  "friends": ["MonkeBot0", "BeveledCube"],
   "prefix": "f!",
   "useLogs": true
 }

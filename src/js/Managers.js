@@ -41,9 +41,11 @@ class TargetManager {
     for (const [username, mob] of this.TargetedPlayers.entries()) {
       if (botUsername === username) {
         this.TargetedPlayers.delete(username);
-        return;
+        return true;
       }
     }
+
+    return false;
   }
 }
 

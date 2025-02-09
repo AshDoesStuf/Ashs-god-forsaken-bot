@@ -6,12 +6,15 @@ import Fight from "./js/fightBot";
 import AshPvP from "../../ash-pvp/src/pvp.js";
 import { Vec3 } from "vec3";
 import { Entity } from "prismarine-entity";
+import PatrolBot from "./js/patrolBot";
 
 declare module "mineflayer" {
   interface Bot {
     fightBot: Fight;
     guardBot: GuardBot;
     huntBot: HuntBot;
+
+    patrolBot: PatrolBot;
     hivemind: {
       config: object;
       workers: Array<any>?;

@@ -32,6 +32,10 @@ class PatrolBot {
     this.attacking = false;
     this.lastAttackTime = 0;
     this.usingBow = false;
+    /**
+     * @type {import("prismarine-entity").Entity[]}
+     */
+    this.enemies = [];
 
     this.loadPoints();
   }
@@ -71,6 +75,8 @@ class PatrolBot {
       return;
     }
 
+    if (this.enemies.length > 0) return;
+
     for (let i = 0; i < points.length; i++) {
       const point = points[i];
       this.lastPoint = point;
@@ -93,17 +99,33 @@ class PatrolBot {
       const attackInterval = 1000;
 
       while (timeElapsed < 5000) {
-        const target = this.bot.nearestEntity(
+        const potentialTargets = this.bot.nearestEntities(
           (e) =>
             e.type === "hostile" &&
-            e.position.distanceTo(this.bot.entity.position) <= 16
+            e.position.distanceTo(this.bot.entity.position) <= 16,
+          5
         );
 
-        if (target) {
-          console.log("[PATROL]: Target found, attacking...");
+        if (potentialTargets.length === 0) {
+          await sleep(attackInterval);
+          timeElapsed += attackInterval;
+          continue;
+        }
 
-          this.target = target;
+        const targets = potentialTargets.sort(
+          (a, b) =>
+            a.position.distanceTo(this.bot.entity.position) -
+            b.position.distanceTo(this.bot.entity.position)
+        );
+
+        if (targets.length > 0) {
+          this.enemies = targets;
+          console.log("[PATROL]: Found enemies");
+          const enemiesString = targets.map((e) => e.name).join(", ");
+          console.log(`[PATROL]: Enemies: ${enemiesString}`);
+
           this.patrolling = false;
+          await this.attackEnemies();
           return;
         }
 
@@ -117,6 +139,81 @@ class PatrolBot {
     // After completing the patrol loop, reset 'patrolling' and continue patrolling
     this.patrolling = true;
     this.startPatrol();
+  }
+
+  async attackEnemies() {
+    // Sort mobs by proximity to the bot
+    const mobs = this.enemies;
+
+    mobs.sort(
+      (a, b) =>
+        a.position.distanceTo(this.bot.entity.position) -
+        b.position.distanceTo(this.bot.entity.position)
+    );
+
+    // Filter to get mobs within attack range
+    const mobsToAttack = mobs.filter(
+      (mob) => mob.position.distanceTo(this.bot.entity.position) <= 16
+    );
+
+    console.log(`[PATROL]: Attacking ${mobsToAttack.length} mobs`);
+
+    // Create an array of promises for attacking the mobs
+    const attackPromises = mobsToAttack.map((mob) => this.setTarget(mob));
+
+    // Wait for all attacks to complete
+    await Promise.all(attackPromises);
+
+    // Remove attacked mobs from the original array
+    for (const mob of mobsToAttack) {
+      const index = this.enemies.indexOf(mob);
+      if (index > -1) {
+        this.enemies.splice(index, 1);
+      }
+    }
+    console.log(`[PATROL]: ${this.enemies.length} mobs remaining`);
+    console.log("[PATROL]: Finished attacking mobs");
+    this.patrolling = true;
+    this.startPatrol();
+  }
+
+  setTarget(target) {
+    if (!target) {
+      return Promise.reject(new Error("No target specified"));
+    }
+
+    this.target = target;
+
+    return new Promise((resolve, reject) => {
+      const onDeath = (entity) => {
+        if (entity.id === target.id) {
+          this.bot.removeListener("entityDead", onDeath);
+          this.resetCombatState();
+          console.log(`[PATROL]: Target ${entity.name} died`);
+          resolve();
+        }
+      };
+
+      const onGone = (entity) => {
+        if (entity.id === target.id) {
+          this.bot.removeListener("entityGone", onGone);
+          this.resetCombatState();
+          console.log(`[PATROL]: Target ${entity.name} is gone`);
+          resolve();
+        }
+      };
+
+      // If the bot dies or another error occurs, reject the promise
+      const onError = () => {
+        this.bot.removeListener("entityDead", onDeath);
+        this.bot.removeListener("death", onError);
+        reject(new Error("Bot died or an error occurred while attacking"));
+      };
+
+      this.bot.on("entityDead", onDeath);
+      this.bot.on("entityGone", onGone);
+      this.bot.on("death", onError);
+    });
   }
 
   //This will run every minecraft tick
@@ -138,6 +235,9 @@ class PatrolBot {
     ) {
       this.usingBow = true;
 
+      if (this.bot.ashpvp.canUpdateMainHand())
+        this.bot.ashpvp.toggleUpdateMainHand();
+
       await this.bot.equip(
         this.bot.inventory.items().find((item) => item.name.includes("bow")),
         "hand"
@@ -145,6 +245,13 @@ class PatrolBot {
 
       this.bot.hawkEye.oneShot(this.target, Weapons.bow);
       return;
+    }
+
+    if (this.target.name !== "phantom" && this.usingBow) {
+      this.usingBow = false;
+
+      if (!this.bot.ashpvp.canUpdateMainHand())
+        this.bot.ashpvp.toggleUpdateMainHand();
     }
 
     const distanceToTarget = this.bot.entity.position.distanceTo(

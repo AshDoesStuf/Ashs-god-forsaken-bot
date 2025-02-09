@@ -10,7 +10,7 @@ module.exports = (bot) => {
   const hiveConfig = bot.hivemind.config;
   const kings = bot.hivemind.kings;
   bot.on("physicsTick", async () => {
-    bot.fightBot.update();
+    // bot.fightBot.update();
     bot.guardBot.update();
     bot.huntBot.update();
     await bot.patrolBot.attackTarget();
@@ -18,6 +18,12 @@ module.exports = (bot) => {
   });
 
   bot.on("target-death", (entity) => {
+    const player = bot.players[entity.username];
+
+    if (player && TargetManager.isPlayerTargeted(player)) {
+      TargetManager.unTargetPlayer(bot.username);
+    }
+
     if (bot.patrolBot.target && entity.id === bot.patrolBot.target.id) {
       stop();
 
@@ -28,10 +34,10 @@ module.exports = (bot) => {
   });
 
   bot.on("entityDead", async (e) => {
-    if (bot.patrolBot.target && e.id === bot.patrolBot.target.id) {
-      bot.patrolBot.resetCombatState();
-      bot.patrolBot.startPatrol();
-    }
+    // if (bot.patrolBot.target && e.id === bot.patrolBot.target.id) {
+    //   bot.patrolBot.resetCombatState();
+    //   bot.patrolBot.startPatrol();
+    // }
 
     if (bot.guardBot.attackTarget && e.id === bot.guardBot.attackTarget.id) {
       bot.guardBot.resetCombatState();
@@ -41,10 +47,10 @@ module.exports = (bot) => {
   });
 
   bot.on("entityGone", async (e) => {
-    if (bot.patrolBot.target && e.id === bot.patrolBot.target.id) {
-      bot.patrolBot.resetCombatState();
-      bot.patrolBot.startPatrol();
-    }
+    // if (bot.patrolBot.target && e.id === bot.patrolBot.target.id) {
+    //   bot.patrolBot.resetCombatState();
+    //   bot.patrolBot.startPatrol();
+    // }
 
     if (bot.guardBot.attackTarget && e.id === bot.guardBot.attackTarget.id) {
       bot.guardBot.resetCombatState();
@@ -185,19 +191,26 @@ module.exports = (bot) => {
     //   }
     // }
 
-    // if (victim === bot.entity) {
-    //   if (bot.fightBot.inBattle) {
+    // if (victim === bot.entity && !bot.ashpvp.isPartOfTeam(attacker)) {
+    //   // if we get hit and we already have a target
+    //   if (bot.ashpvp.target) {
+    //     if (!bot.ashpvp.possibleTargets.has(attacker.id))
+    //       bot.ashpvp.possibleTargets.add(attacker.id);
     //     return;
     //   }
-
-    //   if (bot.ashpvp.target) return;
 
     //   if (attacker.username === bot.username) {
     //     return;
     //   }
 
     //   bot.ashpvp.stop();
-    //   bot.ashpvp.attack(attacker);
+
+    //   bot.ashpvp.possibleTargets.add(attacker.id);
+    //   try {
+    //     await bot.ashpvp.attack(attacker);
+    //   } catch (error) {
+    //     console.log(error);
+    //   }
     // }
   });
 

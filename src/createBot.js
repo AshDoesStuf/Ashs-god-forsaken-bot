@@ -71,14 +71,16 @@ async function createBot(
     });
 
     bot.on("kicked", (r) => {
-      console.log(`Kicked due to ${chalk.green(r)}`);
+      console.log(`Kicked due to:`);
+      console.log(r)
       bot.end(r);
       bot.ws.close();
       return reject();
     });
 
     bot.on("end", (r) => {
-      console.log(`Ended due to ${chalk.blue(r)}`);
+      console.log(`Ended due to:`);
+      console.log(r)
       bot.end(r);
       bot.ws.close();
       return reject();
@@ -120,7 +122,7 @@ async function createBot(
 
       const { Default } = bot.movement.goals;
       bot.movement.setGoal(Default);
-
+                                                
       bot.bloodhound.yawCorrelation = true;
       bot.autoEat.options.priority = "saturation";
       bot.autoEat.options.startAt = 17;

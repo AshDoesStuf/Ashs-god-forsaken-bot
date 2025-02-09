@@ -96,9 +96,6 @@ module.exports = {
             console.log("target is far");
           } else bot.chat("target is far away");
         }
-      } else if (subCommand === "-patrol") {
-        bot.patrolBot.patrolling = true;
-        await bot.patrolBot.startPatrol();
       } else if (subCommand === "-kitPvp") {
         const pos = new Vec3(-1, 67, -52);
         const goal = new goals.GoalGetToBlock(pos.x, pos.y, pos.z);
@@ -165,13 +162,53 @@ module.exports = {
       } else if (subCommand === "-tffa") {
         //Team free for all
 
+        //makes us fight members of our own team
+
         /**
          * username : Team
          */
         const teams = bot.teamMap;
         const botTeam = teams[bot.username];
 
-        
+        const usernames = botTeam.members.filter(
+          (username) =>
+            username !== bot.username && !bot.hivemind.kings.includes(username)
+        );
+
+        let target = null;
+
+        // console.log(usernames)
+
+        for (const username of usernames) {
+          const player = bot.players[username];
+
+          if (!player) continue;
+
+          // console.log(player)
+
+          const entity = player.entity;
+
+          if (!entity) continue;
+
+          // if (TargetManager.isPlayerTargeted(player)) continue;
+
+          target = entity;
+          break;
+        }
+
+        if (!target) {
+          return;
+        }
+
+        TargetManager.TargetedPlayers.set(
+          bot.username,
+          bot.players[target.username]
+        );
+
+        bot.ashpvp.stop();
+        try {
+          await bot.ashpvp.attack(target);
+        } catch (error) {}
       }
     }
   },

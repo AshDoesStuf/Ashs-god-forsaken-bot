@@ -5,6 +5,8 @@ const path = require("path");
 const filePath = "/home/ekcrossna/Desktop/mineflayer/archer/src/commands";
 const filePath2 = "/home/ekcrossna/Desktop/mineflayer/archer/src/bmcommands";
 
+const sussyVersions = ["1.21", "1.21.1", "1.21.2", "1.21.3", "1.21.4"];
+
 /**
  *
  * @param {import("mineflayer").Bot} bot
@@ -38,6 +40,88 @@ module.exports = (bot) => {
   }
 
   console.log(`Loaded ${bot.commands.length} commands`);
+
+  bot.on("messagestr", (username, pos, chatMessage) => {
+    if (!sussyVersions.includes(bot.version)) return;
+
+    if (chatMessage.json.translate !== "chat.type.text") return;
+
+    function removeBrackets(str) {
+      return str.replace(/[<>]/g, "");
+    }
+
+    username = removeBrackets(username).trim();
+
+    //MESSage in this case is the username ig rela pro pro gay men
+
+    // console.log(message);
+    // console.log(pos);
+    // console.log(chatMessage.json);
+
+    const realMessage =
+      chatMessage.json.translate === "chat.type.text"
+        ? `${username.trim()}:${Object.values(chatMessage.json.with[1])}`
+        : "nope";
+
+    console.log(realMessage);
+
+    /**
+     * @type {string}
+     */
+    const usableMessage = Object.values(chatMessage.json.with[1])[0];
+
+    // console.log(usableMessage);
+
+    if (username === bot.username) return;
+    // console.log(jsonMsg.json.with[1])
+
+    if (usableMessage.startsWith(`${prefix}${bot.username}`)) {
+      const args = usableMessage
+        .slice((prefix + bot.username).length)
+        .trim()
+        .split(" ");
+      const command = bot.commands.find(
+        (cm) => cm.name === args[0] || cm.aliases?.includes(args[0])
+      );
+
+      if (!command) return;
+      // bot.whisper(`Unknown command: ${args[0]}`);
+
+      // console.log("Command name", command.name);
+      // console.log(args);
+
+      if (args[0] === command.name && master.includes(username)) {
+        args.shift(); // Remove the command name from the args array
+
+        if (command.args && args.length === 0) {
+          // bot.whisper(`Usage: ${command.usage}`);
+          return;
+        }
+
+        command.execute(bot, username, args);
+      }
+    }
+    // to all bots
+    else if (usableMessage.startsWith(`${prefix}`)) {
+      const args = usableMessage.slice(prefix.length).trim().split(" ");
+      const command = bot.commands.find(
+        (cm) => cm.name === args[0] || cm.aliases?.includes(args[0])
+      );
+
+      if (!command) return;
+      // bot.whisper(`Unknown command: ${args[0]}`);
+      if (args[0] === command.name && master.includes(username)) {
+        args.shift(); // Remove the command name from the args array
+        // console.log("g");
+        if (command.args && args.length === 0) {
+          // bot.whisper(`Usage: ${command.usage}`);
+          return;
+        }
+
+        command.execute(bot, username, args);
+      }
+    }
+  });
 
   bot.on("chat", (username, message, trans, jsonMsg) => {
     if (username === bot.username) return;
