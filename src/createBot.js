@@ -25,6 +25,8 @@ const botmindapi = require("../../BotMind/src/loader.js");
 const { bloodhound } = require("@miner-org/bloodhound");
 const autoEat = require("mineflayer-auto-eat");
 
+const windowManagerLoader = require("../../mineflayer-window-helper/src/index.js");
+
 async function createBot(
   options = {
     host: argv[2],
@@ -61,6 +63,8 @@ async function createBot(
     bot.loadPlugin(movement);
     bot.loadPlugin(ashloader);
     bot.loadPlugin(bloodhound);
+
+    bot.loadPlugin(windowManagerLoader);
     // bloodhoundPlugin(bot);
 
     bot.on("error", (err) => {
@@ -72,7 +76,7 @@ async function createBot(
 
     bot.on("kicked", (r) => {
       console.log(`Kicked due to:`);
-      console.log(r)
+      console.log(r);
       bot.end(r);
       bot.ws.close();
       return reject();
@@ -80,7 +84,7 @@ async function createBot(
 
     bot.on("end", (r) => {
       console.log(`Ended due to:`);
-      console.log(r)
+      console.log(r);
       bot.end(r);
       bot.ws.close();
       return reject();
@@ -114,15 +118,30 @@ async function createBot(
       bot.followTarget = null;
       // hive mind shit
       bot.hivemind = {};
+      bot.hivemind.type = "fighter";
       bot.hivemind.config = await bot.bm.getConfig();
       bot.hivemind.kings = await bot.bm.getKings();
+      bot.hivemind.connectedBots = await bot.bm.getConnectedBots();
       bot.hivemind.botId = spawnData.botId;
       bot.bm.ws.id = bot.bmID;
-      //
+
+      bot.bm.on("newBot", (newBot) => {
+        if (newBot.botId === bot.bmID) return;
+
+        //check if the bot is already connected
+        if (bot.hivemind.connectedBots.some((b) => b.botId === newBot.botId)) {
+          return;
+        }
+        console.log(
+          `New bot connected: ${newBot.name} (${newBot.botId}) from ${newBot.message}`
+        );
+
+        bot.hivemind.connectedBots.push(newBot);
+      });
 
       const { Default } = bot.movement.goals;
       bot.movement.setGoal(Default);
-                                                
+
       bot.bloodhound.yawCorrelation = true;
       bot.autoEat.options.priority = "saturation";
       bot.autoEat.options.startAt = 17;

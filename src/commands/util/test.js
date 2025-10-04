@@ -14,6 +14,17 @@ module.exports = {
   name: "test",
 
   async execute(bot, username, args) {
+    const player = bot.players[username];
+    const entity = player.entity;
+
+    console.log("balls")
+    bot.ashpvp.test(entity);
+    console.log("sack")
+
+    // console.log(player.displayName);
+    // Object.entries(bot.teams).forEach(([name, team]) => {
+    //   console.log(name, team);
+    // });
     // const nearestEntity = bot.nearestEntity((e) => e.type === "player");
 
     // if (nearestEntity) {
@@ -27,10 +38,12 @@ module.exports = {
 
     // await bot.ashpvp.trackEntity(entity);
 
-    await placeBlock(
-      bot,
-      "cobweb",
-      bot.entity.position.floored().offset(0, -1, 0)
-    );
+    // await placeBlock(
+    //   bot,
+    //   "cobweb",
+    //   bot.entity.position.floored().offset(0, -1, 0)
+    // );
+
+    
   },
 };

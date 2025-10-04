@@ -5,6 +5,9 @@ const { MobManager } = require("./Managers.js");
 const Entity = require("prismarine-entity").Entity;
 const Vec3 = require("vec3").Vec3;
 
+const { master } = require("../config.json");
+const { Cuboid } = require("../../../skybot/js/utils.js");
+
 // For positions we set a position to guard, when we are in the guarding state we look for entities to attack, if we find some we and it is abit far we set the state to pathfinding and we set a goal to that entity and when we are close enough to attack we set the state to attacking after the entity is dead check if we are near the guard post if not we path to it otherwise we set the state back to guarding
 
 class GuardBot extends EventEmitter {
@@ -21,22 +24,24 @@ class GuardBot extends EventEmitter {
     this.state = "idle";
 
     /**
-     * @type {Vec3 | Entity | null}
+     * @type {Vec3 | Entity | Cuboid}
      */
     this.guardTarget = null;
 
     /**
-     * @type {Entity | null}
+     * @type {Entity}
      */
     this.attackTarget = null;
 
     this.attackPathing = false;
 
     this.attacking = false;
+
+    this.lastAttackTime = 0;
   }
 
   /**
-   * @param {Entity | Vec3} target
+   * @param {Entity | Vec3 | Cuboid} target
    */
   async startGuarding(target) {
     // If we have nothing to guard then return
@@ -67,11 +72,17 @@ class GuardBot extends EventEmitter {
     // If the bot is already pathing, return
     if (this.state === "pathing") return;
 
+    const hivemindMates = this.bot.hivemind.connectedBots.map((b) => b.name);
+
     // Check if there is a nearby hostile entity
     const entity = this.bot.nearestEntity(
       (e) =>
-        e.type === "hostile" &&
-        e.position.distanceTo(this.bot.entity.position) <= 16
+        (e.type === "hostile" ||
+          (e.type === "player" &&
+            !master.includes(e.username) &&
+            !hivemindMates.includes(e.username))) &&
+        e.position.xzDistanceTo(this.bot.entity.position) <= 16 &&
+        e.position.yzDistanceTo(this.bot.entity.position) <= 4
     );
 
     if (!entity) return;
@@ -117,7 +128,7 @@ class GuardBot extends EventEmitter {
         this.attackTarget.position.x,
         this.attackTarget.position.y,
         this.attackTarget.position.z,
-        2
+        3
       );
 
       try {
@@ -139,7 +150,12 @@ class GuardBot extends EventEmitter {
     ) {
       this.attacking = true;
       try {
+        await this.bot.lookAt(
+          this.attackTarget.position.offset(0, this.attackTarget.height, 0),
+          true
+        );
         this.bot.attack(this.attackTarget);
+        this.lastAttackTime = 0;
       } catch (error) {
         console.log(error);
       }
@@ -157,8 +173,12 @@ class GuardBot extends EventEmitter {
 
     if (this.guardTarget instanceof Vec3) {
       distance = this.bot.entity.position.distanceTo(this.guardTarget);
-    } else if (this.guardTarget instanceof Entity) {
-      distance = this.bot.entity.position.distanceTo(this.guardTarget.position);
+    } else if (this.guardTarget instanceof Cuboid) {
+      // find closest point
+      const closestPoint = this.guardTarget.getClosestPointTo(
+        this.bot.entity.position
+      );
+      distance = this.bot.entity.position.distanceTo(closestPoint);
     }
 
     if (distance <= 3) {
@@ -177,9 +197,13 @@ class GuardBot extends EventEmitter {
 
     if (this.guardTarget instanceof Vec3) {
       pos = this.guardTarget;
-    } else if (this.guardTarget instanceof Entity) {
-      pos = this.guardTarget.position;
+    } else if (this.guardTarget instanceof Cuboid) {
+      const closestPoint = this.guardTarget.getClosestPointTo(
+        this.bot.entity.position
+      );
+      pos = closestPoint;
     }
+    if (!pos) return;
 
     const goal = new goals.GoalNear(pos.x, pos.y, pos.z, 1);
     this.state = "pathing";
@@ -189,6 +213,18 @@ class GuardBot extends EventEmitter {
       console.log(error.message);
     }
     this.state = "guarding";
+  }
+
+  async groupRequest({ id, proffession, area }) {
+    if (proffession !== "guard") return;
+
+    // If we are already guarding something, stop
+    if (this.state !== "idle") {
+      this.stopGuarding();
+    }
+
+    // Start guarding the area
+    await this.startGuarding(area);
   }
 }
 

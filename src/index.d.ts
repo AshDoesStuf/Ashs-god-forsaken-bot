@@ -46,6 +46,7 @@ export interface Command {
   description: string;
   args?: boolean;
   usage?: string;
+  aliases?: string[];
   execute(bot: Bot, username: string, args: string[]): void | Promise<void>;
 }
 

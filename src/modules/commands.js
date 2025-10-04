@@ -63,7 +63,7 @@ module.exports = (bot) => {
         ? `${username.trim()}:${Object.values(chatMessage.json.with[1])}`
         : "nope";
 
-    console.log(realMessage);
+    // console.log(realMessage);
 
     /**
      * @type {string}
@@ -224,46 +224,45 @@ module.exports = (bot) => {
 
   // Pikanetwork
   bot.on("messagestr", (msg) => {
-    const whipserRegex = /\[\!\] Message from (\w+) ➠ (.+)/;
-    const kitPvpRegex = /^► \[([^\]]+)\s->\sme\]\s(.*)$/;
-    const match = msg.match(whipserRegex);
-    const kitMatach = msg.match(kitPvpRegex);
+    const patterns = [
+      {
+        name: "whisper",
+        regex: /\[\!\] Message from (\w+) ➠ (.+)/,
+      },
+      {
+        name: "kitPvp",
+        regex: /^► \[([^\]]+)\s->\sme\]\s(.*)$/,
+      },
+      {
+        name: "party",
+        regex: /Party ▏ (\w+): (.+)/,
+      },
+      {
+        name: "practicePvp",
+        regex: /MSG ▏ From (\w+): (.+)/,
+      },
+    ];
 
-    if (match) {
-      const [, username, message] = match;
-      if (username === bot.username) return;
+    for (const { regex } of patterns) {
+      const match = msg.match(regex);
+      if (match) {
+        const [, username, message] = match;
 
-      if (!message.startsWith(prefix)) return;
-      const args = message.slice(prefix.length).split(" ");
-      const command = bot.commands.find((cm) => cm.name.includes(args[0]));
+        if (username === bot.username || !message.startsWith(prefix)) return;
 
-      if (args[0] === command.name && master.includes(username)) {
-        // Remove the command name from the args array
-        args.splice(0, 1);
+        const args = message.slice(prefix.length).split(" ");
+        const command = bot.commands.find((cm) => cm.name.includes(args[0]));
 
-        try {
-          command.execute(bot, username, args);
-        } catch (error) {
-          console.log(error.message);
+        if (command && args[0] === command.name && master.includes(username)) {
+          args.splice(0, 1);
+          try {
+            command.execute(bot, username, args);
+          } catch (error) {
+            console.log(error.message);
+          }
         }
-      }
-    } else if (kitMatach) {
-      const [, username, message] = kitMatach;
-      if (username === bot.username) return;
 
-      if (!message.startsWith(prefix)) return;
-      const args = message.slice(prefix.length).split(" ");
-      const command = bot.commands.find((cm) => cm.name.includes(args[0]));
-
-      if (args[0] === command.name && master.includes(username)) {
-        // Remove the command name from the args array
-        args.splice(0, 1);
-
-        try {
-          command.execute(bot, username, args);
-        } catch (error) {
-          console.log(error.message);
-        }
+        return; // Stop after the first match
       }
     }
   });
@@ -327,6 +326,35 @@ module.exports = (bot) => {
   //Ultimis
   bot.on("messagestr", (msg) => {
     const regex = /\[FRIENDS\] (\w+) ➟ (\w+) » (.+\w+)/;
+    const match = msg.match(regex);
+
+    if (match) {
+      // console.log(match);
+      const [, username, botusername, spacedMessage] = match;
+
+      const message = spacedMessage.replace(/^\s+/, "");
+
+      // console.log(message)
+      if (username === bot.username) return;
+
+      if (!message.startsWith(prefix)) return;
+      const args = message.slice(prefix.length).split(" ");
+      const command = bot.commands.find((cm) => cm.name === args[0]);
+
+      if (!command) return;
+      // bot.whisper(`Unknown command: ${args[0]}`);
+
+      if (args[0] === command.name && master.includes(username)) {
+        args.splice(0, 1);
+
+        command.execute(bot, username, args);
+      }
+    }
+  });
+
+  //Hylex
+  bot.on("messagestr", (msg) => {
+    const regex = /┃ Friends ┃ (\w+) ➟ (\w+) » (.+\w+)/;
     const match = msg.match(regex);
 
     if (match) {

@@ -12,10 +12,14 @@ module.exports = (bot) => {
 
     if (inPvpArea.test(msg)) {
       bot.fightBot.isInArea = true;
-      console.log("Im in the pvp area")
+      console.log("Im in the pvp area");
     } else if (inSpawn.test(msg)) {
       bot.fightBot.isInArea = false;
-      console.log("Im at spawn")
+      console.log("Im at spawn");
     }
   });
+
+  // bot.on("messagestr", (msg, pos) => {
+  //   console.log(msg, pos);
+  // });
 };

@@ -57,9 +57,9 @@ module.exports = {
       else if (subCommand === "-p") {
         const user = subCommandArgs[0] || username;
 
-        if (bot.fightBot.inBattle) {
-          return;
-        }
+        // if (bot.fightBot.inBattle) {
+        //   return;
+        // }
 
         if (user === bot.username) {
           return;
@@ -75,7 +75,9 @@ module.exports = {
           }
         }
       } else if (subCommand === "-ffa") {
-        bot.ashpvp.ffa();
+        const ignoreBotmind = subCommandArgs.includes("ignoreBotmind");
+
+        bot.ashpvp.ffa({ignoreBotmind});
       } else if (subCommand === "-a") {
         if (bot.fightBot.inBattle) {
           return;

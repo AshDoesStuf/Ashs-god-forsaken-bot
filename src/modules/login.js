@@ -7,76 +7,100 @@ const chalk = require("chalk");
  */
 
 module.exports = (bot) => {
-  bot.on("messagestr", async (msg, pos) => {
-    // console.log(msg)
-    const registerMsg = /PikaNetwork » Please register with \/register .+ .+$/;
-    const loginMsg = /PikaNetwork » Please login with \/login .+$/;
-    const ultraReg = /Please register using \/register .+ .+$/;
-    const ultraLog = /Please login with the command \/login .+$/;
-    const cubanarchyReg =
-      /Please, register to the server with the command: \/register <password> <ConfirmPassword>/;
-    const cubanarchyLog = /Please, login with the command: \/login <password>/;
-    const alacityRegister =
-      /Please register using: \/register <password> <password>/;
-    const alacityLogin = /Please login using: \/login <password> \[2fa_code\]/;
-    const ultimisReg = /\/register password password/;
-    const ultimisLog = /\/login password/;
+  const actions = [
+    {
+      regex: /PikaNetwork » Please register with \/register .+ .+$/,
+      action: () => bot.chat(`/reg ${password} ${password}`),
+      type: "register",
+    },
+    {
+      regex: /PikaNetwork » Please login with \/login .+$/,
+      action: () => bot.chat(`/login ${password}`),
+      type: "login",
+    },
+    {
+      regex: /Please register using \/register .+ .+$/,
+      action: () => bot.chat(`/register ${password} ${password}`),
+      type: "register",
+    },
+    {
+      regex: /Please login with the command \/login .+$/,
+      action: () => bot.chat(`/login ${password}`),
+      type: "login",
+    },
+    {
+      regex:
+        /Please, register to the server with the command: \/register <password> <ConfirmPassword>/,
+      action: () => bot.chat(`/register ${password} ${password}`),
+      type: "register",
+    },
+    {
+      regex: /Please, login with the command: \/login <password>/,
+      action: () => bot.chat(`/login ${password}`),
+      type: "login",
+    },
+    {
+      regex: /Please register using: \/register <password> <password>/,
+      action: () => bot.chat(`/register ${password2} ${password2}`),
+      type: "register",
+    },
+    {
+      regex: /Please login using: \/login <password> \[2fa_code\]/,
+      action: () => bot.chat(`/login ${password2}`),
+      type: "login",
+    },
+    {
+      regex: /\/register password password/,
+      action: () => bot.chat(`/register ${password} ${password}`),
+      type: "register",
+    },
+    {
+      regex: /\/login password/,
+      action: () => bot.chat(`/login ${password}`),
+      type: "login",
+    },
+    {
+      regex: /\[\+\] Register: \/register <password> <password>/,
+      action: () => bot.chat(`/register ${password} ${password}`),
+      type: "register",
+    },
+    {
+      regex: /\[\+\] Login: \/login <password>/,
+      action: () => bot.chat(`/login ${password}`),
+      type: "login",
+    },
+    {
+      regex: /Use the command \/register/,
+      action: () => bot.chat(`/register ${password} ${password}`),
+      type: "register",
+    },
+    {
+      regex: /Use the command \/login/,
+      action: () => bot.chat(`/login ${password}`),
+      type: "login",
+    },
+  ];
 
-    const matchReg = registerMsg.test(msg);
-    const matchLog = loginMsg.test(msg);
-    const ultraRegMatch = ultraReg.test(msg);
-    const ultraLogMatch = ultraLog.test(msg);
-    const matchCubaReg = cubanarchyReg.test(msg);
-    const matchCubaLog = cubanarchyLog.test(msg);
-    const matchAlacity = alacityRegister.test(msg);
-    const matchAlacityLog = alacityLogin.test(msg);
-    const matchUltReg = ultimisReg.test(msg);
-    const matchUltLog = ultimisLog.test(msg);
+  bot.on("messagestr", (msg, pos) => {
+    // console.log(msg);
 
+    // Specific "game_info" messages
     if (pos === "game_info") {
-      const regex = /Register with \/register <password>/;
-      const regex2 = /Log in with \/login <password>/;
-
-      if (regex.test(msg)) {
-        console.log(`${chalk.bold.green("Succesfuly registerd!")}`);
+      if (/Register with \/register <password>/.test(msg)) {
+        console.log(chalk.bold.green("Successfully registered!"));
       }
-
-      if (regex2.test(msg)) {
-        bot.chat("/login gayman1");
-        console.log(`${chalk.bold.green("Succesfuly loged in!")}`);
+      if (/Log in with \/login <password>/.test(msg)) {
+        bot.chat(`/login ${password}`);
+        console.log(chalk.bold.green("Successfully logged in!"));
       }
     }
 
-    if (matchReg) {
-      bot.chat(`/reg ${password} ${password}`);
-      console.log(`${chalk.bold.green("Succesfuly registerd!")}`);
-    } else if (matchLog) {
-      bot.chat(`/login ${password}`);
-      console.log(`${chalk.bold.green("Succesfuly loged in!")}`);
-    } else if (ultraRegMatch) {
-      bot.chat(`/register ${password} ${password}`);
-      console.log(`${chalk.bold.green("Succesfuly registerd!")}`);
-    } else if (ultraLogMatch) {
-      bot.chat(`/login ${password}`);
-      console.log(`${chalk.bold.green("Succesfuly loged in!")}`);
-    } else if (matchCubaReg) {
-      bot.chat(`/register ${password} ${password}`);
-      console.log(`${chalk.bold.green("Succesfuly registerd!")}`);
-    } else if (matchCubaLog) {
-      bot.chat(`/login ${password}`);
-      console.log(`${chalk.bold.green("Succesfuly loged in!")}`);
-    } else if (matchAlacity) {
-      bot.chat(`/register ${password2} ${password2}`);
-      console.log(`${chalk.bold.green("Succesfuly registerd!")}`);
-    } else if (matchAlacityLog) {
-      bot.chat(`/login ${password2}`);
-      console.log(`${chalk.bold.green("Succesfuly loged in!")}`);
-    } else if (matchUltReg) {
-      bot.chat(`/register ${password} ${password}`);
-      console.log(`${chalk.bold.green("Succesfuly registerd!")}`);
-    } else if (matchUltLog) {
-      bot.chat(`/login ${password}`);
-      console.log(`${chalk.bold.green("Succesfuly loged in!")}`);
+    for (const { regex, action, type } of actions) {
+      if (regex.test(msg)) {
+        action();
+        console.log(chalk.bold.green(`Successfully ${type}ed!`));
+        break;
+      }
     }
   });
 };

@@ -379,6 +379,26 @@ function getBestWeapon(items) {
   return sortedItems[0];
 }
 
+function useItemWithRotation(bot, { offHand = false } = {}) {
+  const hand = offHand ? 1 : 0;
+  const yaw = bot.entity.yaw || 0;
+  const pitch = bot.entity.pitch || 0;
+
+  // bot._client.nextSequenceNumber
+  //? bot._client.nextSequenceNumber()
+
+  const sequence = Math.floor(Math.random() * 10000);
+
+  bot._client.write("use_item", {
+    hand,
+    sequence,
+    rotation: {
+      x: pitch,
+      y: yaw,
+    },
+  });
+}
+
 module.exports = {
   Timer,
   getDirection,
@@ -405,4 +425,5 @@ module.exports = {
   getItemEnchantments,
   getNearestPlayers,
   getBestWeapon,
+  useItemWithRotation,
 };
