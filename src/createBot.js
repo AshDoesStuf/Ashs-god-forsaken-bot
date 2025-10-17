@@ -25,7 +25,7 @@ const botmindapi = require("../../BotMind/src/loader.js");
 const { bloodhound } = require("@miner-org/bloodhound");
 const autoEat = require("mineflayer-auto-eat");
 
-const windowManagerLoader = require("../../mineflayer-window-helper/src/index.js");
+// const windowManagerLoader = require("../../mineflayer-window-helper/src/index.js");
 
 async function createBot(
   options = {
@@ -64,7 +64,7 @@ async function createBot(
     bot.loadPlugin(ashloader);
     bot.loadPlugin(bloodhound);
 
-    bot.loadPlugin(windowManagerLoader);
+    // bot.loadPlugin(windowManagerLoader);
     // bloodhoundPlugin(bot);
 
     bot.on("error", (err) => {
