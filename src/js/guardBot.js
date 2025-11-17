@@ -73,6 +73,11 @@ class GuardBot extends EventEmitter {
     if (this.state === "pathing") return;
 
     const hivemindMates = this.bot.hivemind.connectedBots.map((b) => b.name);
+    const distance =
+      this.guardTarget instanceof Cuboid
+        ? Math.max(this.guardTarget.getXWidth(), this.guardTarget.getZWidth()) /
+          2
+        : 16;
 
     // Check if there is a nearby hostile entity
     const entity = this.bot.nearestEntity(
@@ -81,7 +86,7 @@ class GuardBot extends EventEmitter {
           (e.type === "player" &&
             !master.includes(e.username) &&
             !hivemindMates.includes(e.username))) &&
-        e.position.xzDistanceTo(this.bot.entity.position) <= 16 &&
+        e.position.xzDistanceTo(this.bot.entity.position) <= distance &&
         e.position.yzDistanceTo(this.bot.entity.position) <= 4
     );
 
@@ -174,11 +179,9 @@ class GuardBot extends EventEmitter {
     if (this.guardTarget instanceof Vec3) {
       distance = this.bot.entity.position.distanceTo(this.guardTarget);
     } else if (this.guardTarget instanceof Cuboid) {
-      // find closest point
-      const closestPoint = this.guardTarget.getClosestPointTo(
-        this.bot.entity.position
-      );
-      distance = this.bot.entity.position.distanceTo(closestPoint);
+      const botPos = this.bot.entity.position.offset(0, 0, 0);
+      const closestPoint = this.guardTarget.getClosestPointTo(botPos);
+      distance = botPos.distanceTo(closestPoint.offset(0.5, 0.5, 0.5));
     }
 
     if (distance <= 3) {
@@ -201,7 +204,11 @@ class GuardBot extends EventEmitter {
       const closestPoint = this.guardTarget.getClosestPointTo(
         this.bot.entity.position
       );
-      pos = closestPoint;
+      const targetPos = closestPoint.offset(0, 1, 0);
+      if (!this.bot.blockAt(targetPos).boundingBox === "empty") {
+        targetPos.y += 1;
+      }
+      pos = targetPos;
     }
     if (!pos) return;
 
