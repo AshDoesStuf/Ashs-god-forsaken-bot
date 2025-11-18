@@ -5,6 +5,14 @@ const Entity = require("prismarine-entity").Entity;
 const speeds = require("../speeds.json");
 const weaponBase = require("../weaponBase.json");
 
+const sleep = (ms = 2000) => {
+  return new Promise((r) => {
+    setTimeout(r, ms);
+  });
+};
+
+const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
+
 class Timer {
   constructor() {
     this.lastMs = Date.now();
@@ -399,6 +407,81 @@ function useItemWithRotation(bot, { offHand = false } = {}) {
   });
 }
 
+/**
+ * @param {import("mineflayer").Bot} bot
+ * @param {string} blockName - The name of the block to place
+ * @param {Vec3} targetPos - The position where to place the block
+ * @param {{
+ *   facing?: "top" | "bottom" | "north" | "south" | "east" | "west",
+ *   delayBefore?: number,
+ *   delayAfter?: number,
+ *   swingArm?: "right" | "left",
+ *   offhand?: boolean,
+ *   half?: "top" | "bottom"
+ * }} options
+ */
+async function placeBlock(bot, blockName, targetPos, options = {}) {
+  const {
+    facing = "top", // face to place against
+    delayBefore = 100,
+    delayAfter = 300,
+    swingArm = "right",
+    offhand = false,
+    half,
+  } = options;
+
+  const directionMap = {
+    top: new Vec3(0, 1, 0),
+    bottom: new Vec3(0, -1, 0),
+    north: new Vec3(0, 0, -1),
+    south: new Vec3(0, 0, 1),
+    west: new Vec3(-1, 0, 0),
+    east: new Vec3(1, 0, 0),
+  };
+
+  const faceVec = directionMap[facing] || directionMap.bottom;
+
+  const refBlockPos = targetPos.plus(faceVec);
+  const referenceBlock = bot.blockAt(refBlockPos);
+  const trueBlock = bot.blockAt(targetPos);
+
+  if (!referenceBlock) {
+    throw new Error(`No reference block at ${refBlockPos}`);
+  }
+
+  // ✅ Rotate bot to make blocks like stairs face the correct way
+  if (["north", "south", "east", "west"].includes(facing)) {
+    const lookVec = directionMap[facing];
+    const lookPos = targetPos
+      .clone()
+      .plus(new Vec3(0.5, 0.5, 0.5))
+      .minus(lookVec);
+    await bot.lookAt(lookPos, true);
+  }
+
+  const item = bot.inventory.items().find((i) => i.name === blockName);
+  if (!item) throw new Error(`Bot does not have ${blockName} in inventory!`);
+
+  await sleep(delayBefore);
+  await bot.equip(item, offhand ? "off-hand" : "hand");
+
+  if (typeof bot._genericPlace !== "function") {
+    throw new Error("This version of mineflayer does not have _genericPlace");
+  }
+
+  await bot._genericPlace(trueBlock, negateVec3(faceVec), {
+    half,
+    swingArm,
+    offhand,
+  });
+
+  await sleep(delayAfter);
+}
+
+function negateVec3(vec) {
+  return new Vec3(-vec.x, -vec.y, -vec.z);
+}
+
 module.exports = {
   Timer,
   getDirection,
@@ -426,4 +509,5 @@ module.exports = {
   getNearestPlayers,
   getBestWeapon,
   useItemWithRotation,
+  placeBlock,
 };

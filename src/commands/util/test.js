@@ -17,9 +17,12 @@ module.exports = {
     const player = bot.players[username];
     const entity = player.entity;
 
-    console.log("balls")
-    bot.ashpvp.test(entity);
-    console.log("sack")
+    // await bot.airStriker.airStrike(entity.position);
+    await bot.bomberBot.setTarget(entity);
+
+    // console.log("balls")
+    // bot.ashpvp.test(entity);
+    // console.log("sack")
 
     // console.log(player.displayName);
     // Object.entries(bot.teams).forEach(([name, team]) => {
@@ -43,7 +46,5 @@ module.exports = {
     //   "cobweb",
     //   bot.entity.position.floored().offset(0, -1, 0)
     // );
-
-    
   },
 };

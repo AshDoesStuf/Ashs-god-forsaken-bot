@@ -24,6 +24,8 @@ const HuntBot = require("./js/huntBot.js");
 const botmindapi = require("../../BotMind/src/loader.js");
 const { bloodhound } = require("@miner-org/bloodhound");
 const autoEat = require("mineflayer-auto-eat");
+const AirStriker = require("./js/airstriker.js");
+const BomberBot = require("./js/bomberBot.js");
 
 // const windowManagerLoader = require("../../mineflayer-window-helper/src/index.js");
 
@@ -113,6 +115,8 @@ async function createBot(
       bot.patrolBot = new PatrolBot(bot);
       bot.guardBot = new GuardBot(bot);
       bot.huntBot = new HuntBot(bot);
+      bot.airStriker = new AirStriker(bot);
+      bot.bomberBot = new BomberBot(bot);
       bot.commands = [];
       bot.bmCommands = [];
       bot.followTarget = null;
@@ -147,7 +151,7 @@ async function createBot(
       bot.autoEat.options.startAt = 17;
       bot.autoEat.options.offhand = true;
 
-      loadModules(bot);
+  loadModules(bot);
 
       resolve(bot);
     });
@@ -157,12 +161,12 @@ async function createBot(
 function loadModules(bot) {
   const MODULES_DIRECTORY = path.join(__dirname, "modules");
   const modules = fs
-    .readdirSync(MODULES_DIRECTORY) // find the plugins
-    .filter((x) => x.endsWith(".js")) // only use .js files
+    .readdirSync(MODULES_DIRECTORY)
+    .filter((x) => x.endsWith(".js"))
     .map((pluginName) => require(path.join(MODULES_DIRECTORY, pluginName)));
 
   bot.loadPlugins(modules);
-  console.log("loeaded modules", modules.length);
+  console.log(`Loaded ${modules.length} modules`);
 }
 
 module.exports = { createBot };

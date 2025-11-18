@@ -2,9 +2,6 @@ const fs = require("fs");
 const { master, prefix } = require("../config.json");
 const path = require("path");
 
-const filePath = "/home/ekcrossna/Desktop/mineflayer/archer/src/commands";
-const filePath2 = "/home/ekcrossna/Desktop/mineflayer/archer/src/bmcommands";
-
 const sussyVersions = ["1.21", "1.21.1", "1.21.2", "1.21.3", "1.21.4"];
 
 /**
@@ -12,6 +9,8 @@ const sussyVersions = ["1.21", "1.21.1", "1.21.2", "1.21.3", "1.21.4"];
  * @param {import("mineflayer").Bot} bot
  */
 module.exports = (bot) => {
+  const filePath = path.join(__dirname, "..", "commands");
+  const filePath2 = path.join(__dirname, "..", "bmcommands");
   const commandFolders = fs.readdirSync(filePath);
 
   for (const folder of commandFolders) {

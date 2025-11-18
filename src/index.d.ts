@@ -7,14 +7,17 @@ import AshPvP from "../../ash-pvp/src/pvp.js";
 import { Vec3 } from "vec3";
 import { Entity } from "prismarine-entity";
 import PatrolBot from "./js/patrolBot";
+import AirStriker from "./js/airstriker.js";
+import BomberBot from "./js/bomberBot.js";
 
 declare module "mineflayer" {
   interface Bot {
     fightBot: Fight;
     guardBot: GuardBot;
     huntBot: HuntBot;
-
+    airStriker: AirStriker;
     patrolBot: PatrolBot;
+    bomberBot: BomberBot;
     hivemind: {
       config: object;
       workers: Array<any>?;
