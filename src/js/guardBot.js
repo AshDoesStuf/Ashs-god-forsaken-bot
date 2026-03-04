@@ -44,17 +44,20 @@ class GuardBot extends EventEmitter {
    * @param {Entity | Vec3 | Cuboid} target
    */
   async startGuarding(target) {
-    // If we have nothing to guard then return
     if (!target) return;
-
-    // If the bot is already attacking, don't start guarding
     if (this.state === "attacking") return;
 
     console.log("Started guarding!");
+
+    // Clean up any existing attack state
+    if (this.attackTarget) {
+      MobManager.TargetedMobs.delete(this.bot.username);
+      this.attackTarget = null;
+    }
+
     this.guardTarget = target;
     this.state = "guarding";
 
-    // If we aren't attacking then head to the target
     if (!this.isNearGuardTarget()) {
       await this.gotoGuardTarget();
     }
@@ -63,52 +66,114 @@ class GuardBot extends EventEmitter {
   stopGuarding() {
     this.state = "idle";
     this.guardTarget = null;
+    this.attackTarget = null;
+
+    // Clean up tracked mobs
+    MobManager.TargetedMobs.delete(this.bot.username);
+
     this.bot.pathfinder.setGoal(null);
+    this.attackPathing = false;
+    this.attacking = false;
   }
 
   async update() {
     if (!this.guardTarget) return;
 
-    // If the bot is already pathing, return
+    // ignore if we're already pathing
     if (this.state === "pathing") return;
 
     const hivemindMates = this.bot.hivemind.connectedBots.map((b) => b.name);
-    const distance =
-      this.guardTarget instanceof Cuboid
-        ? Math.max(this.guardTarget.getXWidth(), this.guardTarget.getZWidth()) /
-          2
-        : 16;
 
-    // Check if there is a nearby hostile entity
-    const entity = this.bot.nearestEntity(
-      (e) =>
-        (e.type === "hostile" ||
-          (e.type === "player" &&
-            !master.includes(e.username) &&
-            !hivemindMates.includes(e.username))) &&
-        e.position.xzDistanceTo(this.bot.entity.position) <= distance &&
-        e.position.yzDistanceTo(this.bot.entity.position) <= 4
-    );
+    // 🔥 helper: enemy filter
+    const isEnemy = (e) =>
+      e.type === "hostile" ||
+      (e.type === "player" &&
+        !master.includes(e.username) &&
+        !hivemindMates.includes(e.username));
 
-    if (!entity) return;
+    let entity = null;
 
-    if (MobManager.isMobTargeted(entity)) return;
+    // ---------------------------------------------------------
+    // 🟥 CASE 1 — guardTarget is a Cuboid: perimeter defense
+    // ---------------------------------------------------------
+    if (this.guardTarget instanceof Cuboid) {
+      // grab entities inside or near cuboid
+      const entities = this.guardTarget.getEntitiesAround(
+        this.bot,
+        4, // margin around cuboid
+        isEnemy
+      );
 
-    // Stop pathfinding if necessary
-    if (this.state === "pathing") {
-      try {
-        this.bot.pathfinder.setGoal(null);
-      } catch (error) {
-        console.log(error);
+      if (entities.length > 0) {
+        // pick nearest to center of cuboid
+        const center = this.guardTarget.getCenter();
+        entities.sort(
+          (a, b) =>
+            a.position.distanceTo(center) - b.position.distanceTo(center)
+        );
+        entity = entities[0];
       }
     }
 
+    // ---------------------------------------------------------
+    // 🟦 CASE 2 — guardTarget is a Vec3: protect a point
+    // ---------------------------------------------------------
+    else if (this.guardTarget?.x !== undefined) {
+      const point = this.guardTarget;
+      const maxDist = 16;
+
+      entity = this.bot.nearestEntity(
+        (e) =>
+          isEnemy(e) &&
+          e.position.distanceTo(point) <= maxDist &&
+          Math.abs(e.position.y - point.y) <= 4
+      );
+    }
+
+    // ---------------------------------------------------------
+    // 🟩 CASE 3 — guardTarget is another Entity: bodyguard mode
+    // ---------------------------------------------------------
+    else if (this.guardTarget?.position !== undefined) {
+      const targetEntity = this.guardTarget;
+      const maxDist = 16;
+
+      entity = this.bot.nearestEntity(
+        (e) =>
+          isEnemy(e) &&
+          e.position.distanceTo(targetEntity.position) <= maxDist &&
+          Math.abs(e.position.y - targetEntity.position.y) <= 4
+      );
+    }
+
+    // ---------------------------------------------------------
+    // no entity found? dip.
+    // ---------------------------------------------------------
+    if (!entity) return;
+
+    // someone else already targeting that bozo?
+    if (MobManager.isMobTargeted(entity)) return;
+
+    // stop pathfinding if needed
+    if (this.state === "pathing") {
+      try {
+        this.bot.pathfinder.setGoal(null);
+      } catch (err) {
+        console.log(err);
+      }
+    }
+
+    // no double attacks
     if (this.state === "attacking") return;
 
+    // lock n load 🔥
     this.state = "attacking";
     this.attackTarget = entity;
     MobManager.TargetedMobs.set(this.bot.username, entity);
-    this.emit("guard-start-attack", { target: entity, state: this.state });
+
+    this.emit("guard-start-attack", {
+      target: entity,
+      state: this.state,
+    });
   }
 
   resetCombatState() {
@@ -205,7 +270,8 @@ class GuardBot extends EventEmitter {
         this.bot.entity.position
       );
       const targetPos = closestPoint.offset(0, 1, 0);
-      if (!this.bot.blockAt(targetPos).boundingBox === "empty") {
+      const block = this.bot.blockAt(targetPos);
+      if (block && block.boundingBox !== "empty") {
         targetPos.y += 1;
       }
       pos = targetPos;

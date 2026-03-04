@@ -77,7 +77,7 @@ bot.once("spawn", async () => {
   bot.chat("Heyyy =)");
 
   const spawnData = {
-    message: `Bot ${bot.username} connected to ${bot._client.socket._host}`,
+    message: `Bot ${bot.username} connected to ${bot.host}`,
     health: bot.health,
     food: bot.food,
     type: "fighter",

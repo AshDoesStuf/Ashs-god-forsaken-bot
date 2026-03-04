@@ -14,15 +14,24 @@ module.exports = {
   name: "test",
 
   async execute(bot, username, args) {
-    const player = bot.players[username];
-    const entity = player.entity;
+    // const player = bot.players[username];
+    // const entity = player.entity;
 
-    // await bot.airStriker.airStrike(entity.position);
-    await bot.bomberBot.setTarget(entity);
+    // // await bot.airStriker.airStrike(entity.position);
+    // await bot.bomberBot.setTarget(entity);
 
     // console.log("balls")
     // bot.ashpvp.test(entity);
     // console.log("sack")
+
+    // const items = await bot.bm.requestBulkItems(
+    //   ["iron_sword"],
+    //   bot.entity.position
+    // );
+
+    // console.log(items);
+
+    // console.log(Object.values(bot.players).map((plr) => plr.ping));
 
     // console.log(player.displayName);
     // Object.entries(bot.teams).forEach(([name, team]) => {

@@ -7,6 +7,8 @@ const { Weapons } = require("minecrafthawkeye");
 const {
   GoalNear,
   GoalAvoid,
+  GoalXZNear,
+  GoalAvoidXZ,
 } = require("../../../mineflayer-baritone/src/goal");
 
 const sleep = (ms = 2000) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -23,11 +25,17 @@ class PatrolBot {
     MELEE_RANGE: 2.9,
     BOW_RANGE: 15,
     PATROL_DISTANCE_THRESHOLD: 0.8,
-    BOW_COOLDOWN: 5000,
+    BOW_COOLDOWN: 2500,
+    BOW_CREEPER_COOLDOWN: 2000,
     RANGED_TARGETS: ["phantom", "creeper"],
+    PATROL_AT_NIGHT: true,
+    MUST_HAVE_ARMOR: false,
   };
 
   constructor(bot) {
+    /**
+     * @type {import("mineflayer").Bot}
+     */
     this.bot = bot;
     this.points = { [bot.username]: [] };
 
@@ -51,6 +59,10 @@ class PatrolBot {
 
     this.loadPoints();
     this.setupEventListeners();
+  }
+
+  log(...args) {
+    console.log(`[PATROL]: `, args);
   }
 
   /**
@@ -121,10 +133,45 @@ class PatrolBot {
       return;
     }
 
+    if (PatrolBot.CONFIG.MUST_HAVE_ARMOR) {
+      const { hasAll, missing } = this.bot.ashpvp.hasFullArmor;
+
+      if (!hasAll) {
+        this.log(`Dont have full armor!`);
+        this.log(missing.join(","));
+
+        this.log("Requesting armor");
+
+        const armorMap = {
+          head: "helmet",
+          toros: "chestplate",
+          legs: "leggings",
+          feet: "boots",
+        };
+
+        const missingArmor = missing.map((slot) => armorMap[slot]);
+
+        const success = await this.bot.bm.requestBulkItems(missingArmor);
+      }
+    }
+
     const points = this.points[this.bot.username];
     if (points.length === 0) {
       console.log("[PATROL]: No patrol points set. Use addPoint() first.");
       return;
+    }
+
+    if (!PatrolBot.CONFIG.PATROL_AT_NIGHT) {
+      this.state.patrolling = true;
+      console.log(`[PATROL]: Starting patrol with ${points.length} points`);
+
+      await this.patrolLoop();
+      return;
+    }
+
+    while (this.bot.time.isDay) {
+      console.log("[PATROL]: Waiting for night");
+      await sleep(1000 * 60 * 5); // check every 5 min
     }
 
     this.state.patrolling = true;
@@ -138,6 +185,26 @@ class PatrolBot {
    */
   async patrolLoop() {
     while (this.state.patrolling) {
+      if (PatrolBot.CONFIG.PATROL_AT_NIGHT && this.bot.time.isDay) {
+        this.state.patrolling = false;
+        console.log("[PATROL]: stoppping patrol since its day now");
+        const result = await this.bot.bm.getWaypoint("guardBase");
+
+        if (!result) {
+          console.log("[PATROL]: no guard base :(");
+          return;
+        }
+
+        const pos = new Vec3(result.pos.x, result.pos.y, result.pos.z);
+
+        const goal = new goals.GoalNear(pos.x, pos.y, pos.z, 1);
+
+        await this.bot.pathfinder.goto(goal);
+        console.log("[PATROL]: Arrived at guard base");
+
+        return;
+      }
+
       try {
         await this.executePatrolCycle();
       } catch (error) {
@@ -204,6 +271,8 @@ class PatrolBot {
     while (timeElapsed < PATROL_WAIT_TIME && this.state.patrolling) {
       const potentialTargets = this.findHostileEntities(ATTACK_RANGE);
 
+      // console.log(potentialTargets);
+
       if (potentialTargets.length > 0) {
         this.combat.enemies = this.sortByDistance(potentialTargets);
         const enemyNames = this.combat.enemies.map((e) => e.name).join(", ");
@@ -226,7 +295,7 @@ class PatrolBot {
   findHostileEntities(range) {
     return this.bot.nearestEntities(
       (e) =>
-        e.type === "hostile" &&
+        (e.type === "hostile" || e.name === "phantom") &&
         e.position.distanceTo(this.bot.entity.position) <= range,
       20 // Max entities to check
     );
@@ -318,7 +387,7 @@ class PatrolBot {
       setTimeout(() => {
         cleanup();
         resolve();
-      }, 30000);
+      }, 60_0000);
     });
   }
 
@@ -327,7 +396,8 @@ class PatrolBot {
    */
   async attackTarget() {
     if (!this.combat.target || this.state.patrolling) return;
-    if (this.state.attackPathing || this.state.attacking) return;
+    if (this.state.attackPathing || this.state.attacking || this.state.usingBow)
+      return;
 
     // Handle ranged combat
     if (this.shouldUseRangedWeapon()) {
@@ -336,7 +406,7 @@ class PatrolBot {
     }
 
     // Disable bow mode if not needed
-    if (this.state.usingBow && !this.shouldUseRangedWeapon()) {
+    if (!this.shouldUseRangedWeapon()) {
       await this.disableBowMode();
     }
 
@@ -360,7 +430,20 @@ class PatrolBot {
       .items()
       .some((item) => item.name.includes("arrow"));
 
-    return isRangedTarget && hasBow && hasArrows && !this.state.usingBow;
+    const distance = this.bot.entity.position.distanceTo(
+      this.combat.target.position
+    );
+
+    const notCreeper = this.combat.target.name !== "creeper";
+
+    return (
+      isRangedTarget &&
+      hasBow &&
+      hasArrows &&
+      !this.state.usingBow &&
+      notCreeper &&
+      distance > 3
+    );
   }
 
   /**
@@ -377,18 +460,35 @@ class PatrolBot {
       const bow = this.bot.inventory
         .items()
         .find((item) => item.name.includes("bow"));
+
+      if (this.state.attackPathing) return;
+
+      // Maintain distance
+      const goal = new GoalAvoidXZ(this.combat.target.position, 5, this.bot);
+      const dist = this.bot.entity.position.distanceTo(
+        this.combat.target.position
+      );
+
+      if (dist <= 5) {
+        this.state.attackPathing = true;
+        await this.bot.ashfinder.goto(goal).catch((err) => {
+          console.error("[COMBAT]: Pathfinding error:", err.message);
+          this.state.attackPathing = false;
+        });
+
+        this.state.attackPathing = false;
+      }
+
       if (bow) {
         await this.bot.equip(bow, "hand");
         this.bot.hawkEye.oneShot(this.combat.target, Weapons.bow);
       }
 
-      // Maintain distance
-      const goal = new GoalAvoid(this.combat.target.position, 5, this.bot);
-      await this.bot.ashfinder.goto(goal).catch((err) => {
-        console.error("[COMBAT]: Pathfinding error:", err.message);
-      });
-
-      await sleep(PatrolBot.CONFIG.BOW_COOLDOWN);
+      await sleep(
+        this.combat.target && this.combat.target.name !== "creeper"
+          ? PatrolBot.CONFIG.BOW_COOLDOWN
+          : PatrolBot.CONFIG.BOW_CREEPER_COOLDOWN
+      );
     } finally {
       this.state.usingBow = false;
     }
@@ -473,6 +573,9 @@ class PatrolBot {
     this.state.attacking = false;
     this.state.attackPathing = false;
     this.state.usingBow = false;
+    if (!this.bot.ashpvp.canUpdateMainHand()) {
+      this.bot.ashpvp.toggleUpdateMainHand();
+    }
   }
 
   /**
@@ -490,7 +593,13 @@ class PatrolBot {
    * Save patrol points to file
    */
   savePoints() {
-    const filePath = path.join(__dirname, "patrolPoints.json");
+    const patrolPointsFolder = path.join(
+      __dirname,
+      "..",
+      "data",
+      "patrolPoints"
+    );
+    const filePath = path.join(patrolPointsFolder, `${this.bot.server}.json`);
 
     try {
       let data = {};
@@ -515,7 +624,13 @@ class PatrolBot {
    * Load patrol points from file
    */
   loadPoints() {
-    const filePath = path.join(__dirname, "patrolPoints.json");
+    const patrolPointsFolder = path.join(
+      __dirname,
+      "..",
+      "data",
+      "patrolPoints"
+    );
+    const filePath = path.join(patrolPointsFolder, `${this.bot.server}.json`);
 
     try {
       if (!fsSync.existsSync(filePath)) {

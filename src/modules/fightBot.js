@@ -7,6 +7,20 @@ const { MobManager, TargetManager } = require("../js/Managers.js");
  */
 module.exports = (bot) => {
   console.log("man i run this hsit");
+
+  bot.armor = () => {
+    const headSlot = bot.inventory.slots[bot.getEquipmentDestSlot("head")];
+    const torsoSlot = bot.inventory.slots[bot.getEquipmentDestSlot("torso")];
+    const legglot = bot.inventory.slots[bot.getEquipmentDestSlot("legs")];
+    const bootSlot = bot.inventory.slots[bot.getEquipmentDestSlot("feet")];
+
+    return {
+      head: headSlot,
+      torso: torsoSlot,
+      legs: legglot,
+      feet: bootSlot,
+    };
+  };
   const hiveConfig = bot.hivemind.config;
   const kings = bot.hivemind.kings;
   bot.on("physicsTick", async () => {

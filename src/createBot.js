@@ -12,12 +12,6 @@ const WebSocket = require("ws");
 const ashloader = require("../../mineflayer-baritone/src/loader.js");
 const { useLogs } = require("./config.json");
 const path = require("path");
-const {
-  bestPlayerFilter,
-  getClosestPlayer,
-  getDistance,
-  remove,
-} = require("./js/utils.js");
 const { goals } = require("mineflayer-pathfinder");
 const PatrolBot = require("./js/patrolBot.js");
 const HuntBot = require("./js/huntBot.js");
@@ -35,7 +29,7 @@ async function createBot(
     port: parseInt(argv[3]),
     username: usernames[2],
     version: "1.18.2",
-  }
+  },
 ) {
   return new Promise(async (resolve, reject) => {
     console.log(options);
@@ -56,6 +50,8 @@ async function createBot(
         fakeHost: options.fakeHost,
       });
     }
+
+    bot.host = options.host;
 
     bot.loadPlugin(botmindapi);
     bot.loadPlugin(autoEat.plugin);
@@ -99,8 +95,10 @@ async function createBot(
 
       bot.setMaxListeners(100);
 
+      bot.server = bot.host;
+
       const spawnData = {
-        message: `Bot ${bot.username} connected to ${bot._client.socket._host}`,
+        message: `Bot ${bot.username} connected to ${bot.host}`,
         type: "fighter",
         botId: generateUniqueId(),
         name: bot.username,
@@ -137,7 +135,7 @@ async function createBot(
           return;
         }
         console.log(
-          `New bot connected: ${newBot.name} (${newBot.botId}) from ${newBot.message}`
+          `New bot connected: ${newBot.name} (${newBot.botId}) from ${newBot.message}`,
         );
 
         bot.hivemind.connectedBots.push(newBot);
@@ -151,7 +149,7 @@ async function createBot(
       bot.autoEat.options.startAt = 17;
       bot.autoEat.options.offhand = true;
 
-  loadModules(bot);
+      loadModules(bot);
 
       resolve(bot);
     });

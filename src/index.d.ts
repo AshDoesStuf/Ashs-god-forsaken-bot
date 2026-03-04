@@ -18,14 +18,6 @@ declare module "mineflayer" {
     airStriker: AirStriker;
     patrolBot: PatrolBot;
     bomberBot: BomberBot;
-    hivemind: {
-      config: object;
-      workers: Array<any>?;
-      botId: string;
-      kings: Array<string>;
-      fileData: object;
-    };
-    commands: Array<Command>;
     bmCommands: Array<Command>;
     bm: BotWebSocketClient;
     ashpvp: AshPvP;

@@ -77,7 +77,7 @@ module.exports = {
       } else if (subCommand === "-ffa") {
         const ignoreBotmind = subCommandArgs.includes("ignoreBotmind");
 
-        bot.ashpvp.ffa({ignoreBotmind});
+        bot.ashpvp.ffa({ ignoreBotmind });
       } else if (subCommand === "-a") {
         if (bot.fightBot.inBattle) {
           return;
@@ -133,7 +133,7 @@ module.exports = {
 
         const opTeamName = args[0];
         const opTeam = Object.values(bot.teamMap).find(
-          (team) => team.team === opTeamName
+          (team) => team.team === opTeamName,
         );
         const opTeamMembers = opTeam.members;
         let target = null;
@@ -174,7 +174,7 @@ module.exports = {
 
         const usernames = botTeam.members.filter(
           (username) =>
-            username !== bot.username && !bot.hivemind.kings.includes(username)
+            username !== bot.username && !bot.hivemind.kings.includes(username),
         );
 
         let target = null;
@@ -204,10 +204,9 @@ module.exports = {
 
         TargetManager.TargetedPlayers.set(
           bot.username,
-          bot.players[target.username]
+          bot.players[target.username],
         );
 
-        bot.ashpvp.stop();
         try {
           await bot.ashpvp.attack(target);
         } catch (error) {}
